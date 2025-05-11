@@ -1,0 +1,17 @@
+{
+    "env": {
+        "platformio_include_paths": [
+            "${workspaceFolder}/**",
+            "${workspaceFolder}/lib/**",
+            "${workspaceFolder}/.pio/libdeps/yolo_uno/**",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/cores/esp32",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/variants/esp32s3",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
+            "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/**"
+        ]
+    }
+} 

@@ -3,7 +3,7 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-bridge.cfg"
   ],
-  "C_Cpp.errorSquiggles": "disabled",
+  "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
   "C_Cpp_Runner.debuggerPath": "gdb",
@@ -63,7 +63,55 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "cmake.sourceDirectory": "D:/HCMUT/Year_3/HK242/IOT/CoreIOT/Lab2/YoloUNO_PlatformIO/lib/ArduinoJson/src",
   "files.associations": {
-    "array": "cpp"
+    "array": "cpp",
+    "deque": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "string_view": "cpp",
+    "initializer_list": "cpp",
+    "*.tcc": "cpp"
   },
-  "cSpell.enabled": false
+  "cSpell.enabled": false,
+  "C_Cpp.intelliSenseEngine": "Tag Parser",
+  "C_Cpp.configurationWarnings": "enabled",
+  "C_Cpp.default.compilerPath": "C:/Users/vinhd/.platformio/packages/toolchain-xtensa-esp32s3/bin/xtensa-esp32s3-elf-gcc.exe",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/**",
+    "${workspaceFolder}/lib/**",
+    "${workspaceFolder}/.pio/libdeps/yolo_uno/**",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/cores/esp32",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/variants/esp32s3",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/libraries/ArduinoOTA/src",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/libraries/Ticker/src",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/libraries/**"
+  ],
+  "C_Cpp.default.browse.path": [
+    "${workspaceFolder}",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32",
+    "C:/Users/vinhd/.platformio/packages/framework-arduinoespressif32/libraries"
+  ],
+  "C_Cpp.default.cStandard": "c17",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.defines": [
+    "PLATFORMIO=60111",
+    "ARDUINO_ESP32_DEV",
+    "ESP32",
+    "ESP32S3",
+    "ESP_PLATFORM",
+    "F_CPU=240000000L",
+    "ARDUINO=10805",
+    "ARDUINO_ARCH_ESP32",
+    "ARDUINO_BOARD=\"yolo_uno\"",
+    "ARDUINO_USB_MODE=1",
+    "ARDUINO_USB_CDC_ON_BOOT=1"
+  ],
+  "C_Cpp.default.compilerArgs": [
+    "-mlongcalls"
+  ],
+  "C_Cpp.default.intelliSenseMode": "gcc-x64",
+  "C_Cpp.loggingLevel": "Debug"
 }
