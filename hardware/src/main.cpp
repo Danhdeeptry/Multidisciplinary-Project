@@ -5,15 +5,13 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <Wire.h>
-#include <ArduinoOTA.h>
-#include <ArduinoJson.h>
-#include "DHT20.h"
 #include <ThingsBoard.h>
+#include "DHT20.h"
+#include "Wire.h"
+#include <ArduinoOTA.h>
 
-// WiFi and ThingsBoard credentials
-constexpr char WIFI_SSID[] = "P4.11";
-constexpr char WIFI_PASSWORD[] = "123456788";
+constexpr char WIFI_SSID[] = "Redmi Note 9S";
+constexpr char WIFI_PASSWORD[] = "88888888";
 
 constexpr char TOKEN[] = "lr3yyoh7v2b98pdmuj38"; 
 
