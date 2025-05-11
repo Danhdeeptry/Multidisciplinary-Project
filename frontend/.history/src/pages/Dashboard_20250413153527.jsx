@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React from "react";
 import Clock from '../components/Clock';
 import useNavigation from "../components/Navigate";
 import farm1img from "../images/farm1.jpg";
 import farm2img from "../images/farm2.jpg";
 import farm3img from "../images/farm3.jpg";
-import { useNavigate } from "react-router-dom";
 
 const farms = [
   {
@@ -22,99 +20,27 @@ const farms = [
   },
 ];
 
-const FarmCard = ({ label, image }) => {
-  const [farmData, setFarmData] = useState({ temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
-  const navigate = useNavigate();
-
-  // Hàm lấy dữ liệu từ localStorage (nếu có)
-  const getFarmData = () => {
-    const local = localStorage.getItem(`farmStatus_${label}`);
-    if (local) {
-      const { temperature, humidity, sunlight } = JSON.parse(local);
-      return {
-        temperature: `${temperature}°C`,
-        humidity: `${humidity}%`,
-        sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
-      };
+const FarmCard = ({ label, image, onClick }) => {
+  // Sample mock data
+  const mockData = {
+    FARM1: {
+      temperature: "27°C",
+      humidity: "65%",
+      sunlight: "High"
+    },
+    FARM2: {
+      temperature: "24°C",
+      humidity: "72%",
+      sunlight: "Medium"
+    },
+    FARM3: {
+      temperature: "29°C",
+      humidity: "58%",
+      sunlight: "High"
     }
-    // Nếu không có localStorage, lấy mockData dạng số lux
-    const mockData = {
-      FARM1: {
-        temperature: "27°C",
-        humidity: "65%",
-        sunlight: "90 lux",
-      },
-      FARM2: {
-        temperature: "24°C",
-        humidity: "72%",
-        sunlight: "60 lux",
-      },
-      FARM3: {
-        temperature: "29°C",
-        humidity: "58%",
-        sunlight: "95 lux",
-      }
-    };
-    return mockData[label] || { temperature: "N/A", humidity: "N/A", sunlight: "N/A" };
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const localData = getFarmData();
-      if (localData) {
-        setFarmData(localData);
-        return;
-      }
-      if (label === "FARM1") {
-        try {
-          const response = await axios.get("http://127.0.0.1:8000/farms");
-          const { temperature, humidity, sunlight } = response.data;
-          setFarmData({
-            temperature: `${temperature}°C`,
-            humidity: `${humidity}%`,
-            sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
-          });
-        } catch (error) {
-          console.error("Error fetching Farm 1 data:", error);
-        }
-      } else {
-        // Mock data cho FARM2 và FARM3 (dùng số lux thay vì mô tả mức)
-        const mockData = {
-          FARM2: {
-            temperature: "24°C",
-            humidity: "72%",
-            sunlight: "60 lux",
-          },
-          FARM3: {
-            temperature: "29°C",
-            humidity: "58%",
-            sunlight: "95 lux",
-          }
-        };
-        setFarmData(mockData[label] || { temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
-      }
-    };
-    fetchData();
-
-    // Lắng nghe sự kiện storage để tự động cập nhật khi localStorage thay đổi (đa tab)
-    const handleStorage = (e) => {
-      if (e.key === `farmStatus_${label}`) {
-        const localData = getFarmData();
-        if (localData) setFarmData(localData);
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    // Lắng nghe custom event để cập nhật ngay cả khi ở cùng 1 tab
-    const handleCustom = () => {
-      const localData = getFarmData();
-      if (localData) setFarmData(localData);
-    };
-    window.addEventListener('farmStatusChanged', handleCustom);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('farmStatusChanged', handleCustom);
-    };
-  }, [label]);
+  const farmData = mockData[label] || { temperature: "N/A", humidity: "N/A", sunlight: "N/A" };
   
   return (
     <div 
@@ -127,6 +53,15 @@ const FarmCard = ({ label, image }) => {
         cursor: "pointer",
         width: "100%",
         height: "100%"
+      }}
+      onClick={onClick}
+      onMouseOver={(e) => {
+        e.currentTarget.style.transform = "translateY(-5px)";
+        e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.15)";
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
       }}
     >
       <div style={{ position: "relative" }}>
@@ -172,6 +107,7 @@ const FarmCard = ({ label, image }) => {
             <span style={{ marginRight: "8px" }}>🌡️</span>
             <span>Temperature: {farmData.temperature}</span>
           </div>
+          
           <div style={{ 
             display: "flex", 
             alignItems: "center", 
@@ -180,10 +116,10 @@ const FarmCard = ({ label, image }) => {
             <span style={{ marginRight: "8px" }}>💧</span>
             <span>Humidity: {farmData.humidity}</span>
           </div>
+          
           <div style={{ 
             display: "flex", 
-            alignItems: "center", 
-            marginBottom: "8px" 
+            alignItems: "center" 
           }}>
             <span style={{ marginRight: "8px" }}>☀️</span>
             <span>Sunlight: {farmData.sunlight}</span>
@@ -205,7 +141,6 @@ const FarmCard = ({ label, image }) => {
           fontWeight: "500",
           transition: "background-color 0.3s"
         }}
-        onClick={() => navigate(`/farm/${label}`)}
         onMouseOver={(e) => {
           e.currentTarget.style.backgroundColor = "#1b5e20";
         }}
@@ -221,13 +156,11 @@ const FarmCard = ({ label, image }) => {
   );
 };
 
-
 const Dashboard = () => {
   const { goToLogin } = useNavigation();
-  const navigate = useNavigate();
   
   // Function to navigate to the farm page
-  const goToFarm = () => {
+  const navigateToFarmPage = () => {
     window.location.href = "/farm";
   };
   
@@ -391,6 +324,7 @@ const Dashboard = () => {
               key={farm.label} 
               label={farm.label} 
               image={farm.image} 
+              onClick={navigateToFarmPage} 
             />
           ))}
         </div>

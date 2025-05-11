@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FaLeaf } from 'react-icons/fa';
 
 // Register ChartJS components
@@ -29,6 +29,12 @@ ChartJS.register(
   Filler
 );
 
+const mockStatus = {
+  FARM1: { temperature: 27, humidity: 65, sunlight: 90 },
+  FARM2: { temperature: 24, humidity: 72, sunlight: 60 },
+  FARM3: { temperature: 29, humidity: 58, sunlight: 95 },
+};
+
 const getGradient = (ctx, colorTop, colorBottom) => {
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
   gradient.addColorStop(0, colorTop);
@@ -37,6 +43,33 @@ const getGradient = (ctx, colorTop, colorBottom) => {
 };
 
 const FarmDetails = () => {
+  const { farmId } = useParams();
+  const navigate = useNavigate();
+  const storageKey = `farmStatus_${farmId?.toUpperCase()}`;
+  // Lấy trạng thái từ localStorage nếu có, nếu không thì lấy mockStatus
+  const getInitialStatus = () => {
+    const local = localStorage.getItem(storageKey);
+    if (local) return JSON.parse(local);
+    return mockStatus[farmId?.toUpperCase()] || { temperature: 0, humidity: 0, sunlight: 0 };
+  };
+  const [appliedStatus, setAppliedStatus] = useState(getInitialStatus());
+  const [currentStatus, setCurrentStatus] = useState(getInitialStatus());
+  const [temperature, setTemperature] = useState(currentStatus.temperature);
+  const [humidity, setHumidity] = useState(currentStatus.humidity);
+  // sunlight luôn là số lux
+  const [sunlight, setSunlight] = useState(currentStatus.sunlight);
+
+  // Khi farmId thay đổi (chuyển farm), cập nhật lại state từ localStorage
+  useEffect(() => {
+    const status = getInitialStatus();
+    setAppliedStatus(status);
+    setCurrentStatus(status);
+    setTemperature(status.temperature);
+    setHumidity(status.humidity);
+    setSunlight(status.sunlight);
+  }, [farmId]);
+
+  // Chart data state
   const [chartData, setChartData] = useState({
     temperature: {
       labels: [],
@@ -163,46 +196,46 @@ const FarmDetails = () => {
     }
   };
 
-  // Simulated data update function (replace with actual API call later)
-  const updateChartData = () => {
-    const now = new Date();
-    const newData = {
-      temperature: Math.random() * 30 + 10, // 10-40°C
-      humidity: Math.random() * 50 + 30,    // 30-80%
-      sunlight: Math.random() * 1000 + 500  // 500-1500 lux
-    };
-    setChartData(prevData => ({
-      temperature: {
-        ...prevData.temperature,
-        labels: [...prevData.temperature.labels, now].slice(-20),
-        datasets: [{
-          ...prevData.temperature.datasets[0],
-          data: [...prevData.temperature.datasets[0].data, newData.temperature].slice(-20)
-        }]
-      },
-      humidity: {
-        ...prevData.humidity,
-        labels: [...prevData.humidity.labels, now].slice(-20),
-        datasets: [{
-          ...prevData.humidity.datasets[0],
-          data: [...prevData.humidity.datasets[0].data, newData.humidity].slice(-20)
-        }]
-      },
-      sunlight: {
-        ...prevData.sunlight,
-        labels: [...prevData.sunlight.labels, now].slice(-20),
-        datasets: [{
-          ...prevData.sunlight.datasets[0],
-          data: [...prevData.sunlight.datasets[0].data, newData.sunlight].slice(-20)
-        }]
-      }
-    }));
+  const handleSave = () => {
+    setCurrentStatus({ temperature, humidity, sunlight });
+    setAppliedStatus({ temperature, humidity, sunlight });
+    localStorage.setItem(storageKey, JSON.stringify({ temperature, humidity, sunlight }));
+    window.dispatchEvent(new Event('farmStatusChanged'));
   };
 
+  // Cập nhật biểu đồ mỗi 3s: nếu đã nhấn Save thì dùng giá trị appliedStatus, chưa thì random
   useEffect(() => {
-    const interval = setInterval(updateChartData, 3000);
+    const interval = setInterval(() => {
+      const now = new Date();
+      setChartData(prevData => ({
+        temperature: {
+          ...prevData.temperature,
+          labels: [...prevData.temperature.labels, now].slice(-20),
+          datasets: [{
+            ...prevData.temperature.datasets[0],
+            data: [...prevData.temperature.datasets[0].data, appliedStatus.temperature ?? (Math.random() * 30 + 10)].slice(-20)
+          }]
+        },
+        humidity: {
+          ...prevData.humidity,
+          labels: [...prevData.humidity.labels, now].slice(-20),
+          datasets: [{
+            ...prevData.humidity.datasets[0],
+            data: [...prevData.humidity.datasets[0].data, appliedStatus.humidity ?? (Math.random() * 50 + 30)].slice(-20)
+          }]
+        },
+        sunlight: {
+          ...prevData.sunlight,
+          labels: [...prevData.sunlight.labels, now].slice(-20),
+          datasets: [{
+            ...prevData.sunlight.datasets[0],
+            data: [...prevData.sunlight.datasets[0].data, appliedStatus.sunlight ?? (Math.random() * 1000 + 500)].slice(-20)
+          }]
+        }
+      }));
+    }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [appliedStatus]);
 
   // Add gradients to chart lines
   const getChartDataWithGradient = (data, ref, colorTop, colorBottom) => {
@@ -219,8 +252,6 @@ const FarmDetails = () => {
     }
     return data;
   };
-
-  const navigate = useNavigate();
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(120deg, #e0f7fa 0%, #f5f8f5 100%)', padding: 0 }}>
@@ -301,6 +332,114 @@ const FarmDetails = () => {
               data={getChartDataWithGradient(chartData.sunlight, sunRef, 'rgba(255,206,86,0.7)', 'rgba(255,206,86,0.05)')}
             />
           </div>
+        </div>
+
+        {/* Control Box */}
+        <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(46,125,50,0.08)', padding: 32 }}>
+          <h2 style={{ color: '#2e7d32', fontWeight: 700, fontSize: 22, marginBottom: 24, textAlign: 'center' }}>Adjust Parameters</h2>
+          
+          {/* Current Status */}
+          <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 32 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28 }}>🌡️</div>
+              <div style={{ color: '#333', fontWeight: 600 }}>Temperature</div>
+              <div style={{ color: '#2e7d32', fontWeight: 700, fontSize: 20 }}>{currentStatus.temperature}°C</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28 }}>💧</div>
+              <div style={{ color: '#333', fontWeight: 600 }}>Humidity</div>
+              <div style={{ color: '#2e7d32', fontWeight: 700, fontSize: 20 }}>{currentStatus.humidity}%</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28 }}>☀️</div>
+              <div style={{ color: '#333', fontWeight: 600 }}>Sunlight</div>
+              <div style={{ color: '#2e7d32', fontWeight: 700, fontSize: 20 }}>{currentStatus.sunlight} lux</div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div style={{ marginBottom: 32 }}>
+            <label style={{ fontWeight: 600, color: '#333', marginBottom: 8, display: 'block' }}>🌡️ Temperature (°C)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <input 
+                type="number" 
+                min={0} 
+                max={50} 
+                value={temperature} 
+                onChange={e => setTemperature(Number(e.target.value))} 
+                style={{ border: '1px solid #e0e0e0', borderRadius: 6, padding: '6px 12px', width: 80, fontSize: 16 }} 
+              />
+              <input 
+                type="range" 
+                min={0} 
+                max={50} 
+                value={temperature} 
+                onChange={e => setTemperature(Number(e.target.value))} 
+                style={{ flex: 1 }} 
+              />
+              <span style={{ minWidth: 32, textAlign: 'right', color: '#2e7d32', fontWeight: 600 }}>{temperature}°C</span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 32 }}>
+            <label style={{ fontWeight: 600, color: '#333', marginBottom: 8, display: 'block' }}>💧 Humidity (%)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <input 
+                type="number" 
+                min={0} 
+                max={100} 
+                value={humidity} 
+                onChange={e => setHumidity(Number(e.target.value))} 
+                style={{ border: '1px solid #e0e0e0', borderRadius: 6, padding: '6px 12px', width: 80, fontSize: 16 }} 
+              />
+              <input 
+                type="range" 
+                min={0} 
+                max={100} 
+                value={humidity} 
+                onChange={e => setHumidity(Number(e.target.value))} 
+                style={{ flex: 1 }} 
+              />
+              <span style={{ minWidth: 32, textAlign: 'right', color: '#2e7d32', fontWeight: 600 }}>{humidity}%</span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 32 }}>
+            <label style={{ fontWeight: 600, color: '#333', marginBottom: 8, display: 'block' }}>☀️ Sunlight (lux)</label>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0 }}>
+              <input
+                type="range"
+                min={0}
+                max={1600}
+                step={1}
+                value={sunlight}
+                onChange={e => setSunlight(Number(e.target.value))}
+                style={{ width: '90%' }}
+              />
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 8, color: '#2e7d32', fontWeight: 700, fontSize: 16 }}>{sunlight} lux</div>
+          </div>
+
+          <button 
+            style={{
+              width: '100%',
+              background: '#2e7d32',
+              color: '#fff',
+              border: 'none',
+              padding: '12px 0',
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 18,
+              boxShadow: '0 2px 8px rgba(46,125,50,0.08)',
+              cursor: 'pointer',
+              transition: 'background 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = '#1b5e20'}
+            onMouseOut={e => e.currentTarget.style.background = '#2e7d32'}
+            onClick={handleSave}
+          >
+            Save Changes
+          </button>
         </div>
       </div>
     </div>
