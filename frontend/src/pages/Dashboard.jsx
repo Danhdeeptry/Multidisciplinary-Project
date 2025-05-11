@@ -21,26 +21,39 @@ const farms = [
 ];
 
 const FarmCard = ({ label, image, onClick }) => {
-  // Sample mock data
-  const mockData = {
-    FARM1: {
-      temperature: "27°C",
-      humidity: "65%",
-      sunlight: "High"
-    },
-    FARM2: {
-      temperature: "24°C",
-      humidity: "72%",
-      sunlight: "Medium"
-    },
-    FARM3: {
-      temperature: "29°C",
-      humidity: "58%",
-      sunlight: "High"
-    }
-  };
+  const [farmData, setFarmData] = useState({ temperature: "N/A", humidity: "N/A" });
 
-  const farmData = mockData[label] || { temperature: "N/A", humidity: "N/A", sunlight: "N/A" };
+  useEffect(() => {
+    const fetchData = async () => {
+      if (label === "FARM1") {
+        try {
+          const response = await axios.get("http://127.0.0.1:8000/farms"); // URL backend trả về data Farm 1
+          const { temperature, humidity } = response.data;
+          setFarmData({
+            temperature: `${temperature}°C`,
+            humidity: `${humidity}%`
+          });
+        } catch (error) {
+          console.error("Error fetching Farm 1 data:", error);
+        }
+      } else {
+        // Mock data cho FARM2 và FARM3
+        const mockData = {
+          FARM2: {
+            temperature: "24°C",
+            humidity: "72%",
+          },
+          FARM3: {
+            temperature: "29°C",
+            humidity: "58%",
+          }
+        };
+        setFarmData(mockData[label] || { temperature: "N/A", humidity: "N/A" });
+      }
+    };
+
+    fetchData();
+  }, [label]);
   
   return (
     <div 
@@ -116,14 +129,6 @@ const FarmCard = ({ label, image, onClick }) => {
             <span style={{ marginRight: "8px" }}>💧</span>
             <span>Humidity: {farmData.humidity}</span>
           </div>
-          
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center" 
-          }}>
-            <span style={{ marginRight: "8px" }}>☀️</span>
-            <span>Sunlight: {farmData.sunlight}</span>
-          </div>
         </div>
         
         <button style={{ 
@@ -155,6 +160,7 @@ const FarmCard = ({ label, image, onClick }) => {
     </div>
   );
 };
+
 
 const Dashboard = () => {
   const { goToLogin } = useNavigation();
