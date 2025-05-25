@@ -35,6 +35,12 @@ const mockStatus = {
   FARM3: { temperature: 29, humidity: 58, sunlight: 95 },
 };
 
+const mockLeafStatus = {
+  FARM1: { health: 95, color: "#4CAF50", status: "Excellent" },
+  FARM2: { health: 75, color: "#FFC107", status: "Good" },
+  FARM3: { health: 45, color: "#FF5722", status: "Needs Attention" },
+};
+
 const getGradient = (ctx, colorTop, colorBottom) => {
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
   gradient.addColorStop(0, colorTop);
@@ -58,6 +64,7 @@ const FarmDetails = () => {
   const [humidity, setHumidity] = useState(currentStatus.humidity);
   // sunlight luôn là số lux
   const [sunlight, setSunlight] = useState(currentStatus.sunlight);
+  const leafStatus = mockLeafStatus[farmId?.toUpperCase()] || { health: 0, color: "#757575", status: "Unknown" };
 
   // Khi farmId thay đổi (chuyển farm), cập nhật lại state từ localStorage
   useEffect(() => {
@@ -338,6 +345,66 @@ const FarmDetails = () => {
         <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(46,125,50,0.08)', padding: 32 }}>
           <h2 style={{ color: '#2e7d32', fontWeight: 700, fontSize: 22, marginBottom: 24, textAlign: 'center' }}>Adjust Parameters</h2>
           
+          {/* Leaf Status Box */}
+          <div style={{
+            margin: '0 auto 32px auto',
+            maxWidth: 420,
+            background: '#f8f9fa',
+            borderRadius: 16,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            border: '2px solid #e0e0e0',
+            padding: 24,
+            position: 'relative',
+            textAlign: 'center'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: leafStatus.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 28,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.10)'
+              }}>
+                <FaLeaf />
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, color: '#333', fontSize: 16 }}>Leaf Health</div>
+                <div style={{ color: leafStatus.color, fontWeight: 700, fontSize: 18 }}>{leafStatus.status}</div>
+              </div>
+            </div>
+            <div style={{
+              background: '#fff',
+              padding: '10px 20px',
+              borderRadius: 24,
+              fontWeight: 600,
+              color: leafStatus.color,
+              fontSize: 18,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              display: 'inline-block',
+              marginBottom: 12
+            }}>{leafStatus.health}%</div>
+            <div style={{
+              height: 12,
+              background: '#e0e0e0',
+              borderRadius: 6,
+              overflow: 'hidden',
+              margin: '0 0 0 0'
+            }}>
+              <div style={{
+                width: `${leafStatus.health}%`,
+                height: '100%',
+                background: leafStatus.color,
+                transition: 'width 0.3s ease',
+                borderRadius: 6
+              }} />
+            </div>
+          </div>
+
           {/* Current Status */}
           <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 32 }}>
             <div style={{ textAlign: 'center' }}>

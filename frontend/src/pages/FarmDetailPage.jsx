@@ -16,11 +16,19 @@ const mockStatus = {
   FARM3: { temperature: 29, humidity: 58, sunlight: 95 },
 };
 
+// Mock leaf status data - in real app, this would come from backend
+const mockLeafStatus = {
+  FARM1: { health: 95, color: "#4CAF50", status: "Excellent" },
+  FARM2: { health: 75, color: "#FFC107", status: "Good" },
+  FARM3: { health: 45, color: "#FF5722", status: "Needs Attention" },
+};
+
 export default function FarmDetailPage() {
   const { farmId } = useParams();
   const navigate = useNavigate();
   const image = farmImages[farmId?.toUpperCase()] || farm1img;
   const initialStatus = mockStatus[farmId?.toUpperCase()] || { temperature: 0, humidity: 0, sunlight: 0 };
+  const leafStatus = mockLeafStatus[farmId?.toUpperCase()] || { health: 0, color: "#757575", status: "Unknown" };
 
   // Trạng thái hiện tại (hiển thị phía trên)
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
@@ -110,24 +118,133 @@ export default function FarmDetailPage() {
           margin: "32px 0 16px 0",
           textAlign: "center"
         }}>Farm: {farmId?.toUpperCase()}</h1>
+
+        {/* Leaf Status Monitoring Box */}
+        <div style={{ 
+          margin: "0 32px 32px 32px", 
+          padding: "24px", 
+          background: "#f8f9fa", 
+          borderRadius: "16px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          border: "2px solid #e0e0e0",
+          position: "relative",
+          zIndex: 1
+        }}>
+          <h2 style={{ 
+            fontSize: 24, 
+            fontWeight: 700, 
+            color: "#2e7d32", 
+            marginBottom: 24, 
+            textAlign: "center",
+            borderBottom: "2px solid #e0e0e0",
+            paddingBottom: "12px"
+          }}>Leaf Health Status</h2>
+          
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "space-between",
+            marginBottom: 20,
+            padding: "0 12px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ 
+                width: 48, 
+                height: 48, 
+                borderRadius: "50%", 
+                background: leafStatus.color,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                fontSize: 24,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+              }}>
+                🌿
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, color: "#333", fontSize: 16 }}>Health Status</div>
+                <div style={{ color: leafStatus.color, fontWeight: 700, fontSize: 18 }}>{leafStatus.status}</div>
+              </div>
+            </div>
+            <div style={{ 
+              background: "#fff", 
+              padding: "10px 20px", 
+              borderRadius: "24px",
+              fontWeight: 600,
+              color: leafStatus.color,
+              fontSize: 18,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+            }}>
+              {leafStatus.health}%
+            </div>
+          </div>
+
+          <div style={{ 
+            height: 12, 
+            background: "#e0e0e0", 
+            borderRadius: 6,
+            overflow: "hidden",
+            margin: "0 12px"
+          }}>
+            <div style={{ 
+              width: `${leafStatus.health}%`, 
+              height: "100%", 
+              background: leafStatus.color,
+              transition: "width 0.3s ease",
+              borderRadius: 6
+            }} />
+          </div>
+        </div>
+
         {/* Trạng thái hiện tại */}
-        <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 32 }}>
-          <div style={{ textAlign: "center" }}>
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "space-around", 
+          marginBottom: 32,
+          position: "relative",
+          zIndex: 2,
+          marginTop: "-100px",
+          padding: "0 32px"
+        }}>
+          <div style={{ 
+            textAlign: "center",
+            background: "#fff",
+            padding: "16px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            width: "30%"
+          }}>
             <div style={{ fontSize: 28 }}>🌡️</div>
             <div style={{ color: "#333", fontWeight: 600 }}>Temperature</div>
             <div style={{ color: "#2e7d32", fontWeight: 700, fontSize: 20 }}>{currentStatus.temperature}°C</div>
           </div>
-          <div style={{ textAlign: "center" }}>
+          <div style={{ 
+            textAlign: "center",
+            background: "#fff",
+            padding: "16px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            width: "30%"
+          }}>
             <div style={{ fontSize: 28 }}>💧</div>
             <div style={{ color: "#333", fontWeight: 600 }}>Humidity</div>
             <div style={{ color: "#2e7d32", fontWeight: 700, fontSize: 20 }}>{currentStatus.humidity}%</div>
           </div>
-          <div style={{ textAlign: "center" }}>
+          <div style={{ 
+            textAlign: "center",
+            background: "#fff",
+            padding: "16px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            width: "30%"
+          }}>
             <div style={{ fontSize: 28 }}>☀️</div>
             <div style={{ color: "#333", fontWeight: 600 }}>Sunlight</div>
             <div style={{ color: "#2e7d32", fontWeight: 700, fontSize: 20 }}>{currentStatus.sunlight}</div>
           </div>
         </div>
+
         {/* Điều chỉnh */}
         <div style={{ padding: 32 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#2e7d32", marginBottom: 24, textAlign: "center" }}>Adjust Parameters</h2>
