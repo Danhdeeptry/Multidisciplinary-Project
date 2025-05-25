@@ -14,21 +14,21 @@ collection.delete_many({})
 
 # Create a list of fixed documents
 data_list = [
-    {"temperature": 25.5, "humidity": 60},
-    {"temperature": 26.0, "humidity": 58},
-    {"temperature": 24.8, "humidity": 65},
-    {"temperature": 27.2, "humidity": 62},
-    {"temperature": 23.5, "humidity": 55},
-    {"temperature": 28.1, "humidity": 70},
-    {"temperature": 25.0, "humidity": 68},
-    {"temperature": 26.7, "humidity": 61},
-    {"temperature": 24.3, "humidity": 59},
-    {"temperature": 27.5, "humidity": 63},
-    {"temperature": 26.2, "humidity": 66},
-    {"temperature": 25.8, "humidity": 64},
-    {"temperature": 24.6, "humidity": 60},
-    {"temperature": 28.3, "humidity": 71},
-    {"temperature": 23.9, "humidity": 57}
+    {"temperature": 100, "humidity": 10, "sunlight": 10},
+    {"temperature": 200, "humidity": 20, "sunlight": 20},
+    {"temperature": 300, "humidity": 30, "sunlight": 30},
+    {"temperature": 400, "humidity": 40, "sunlight": 40},
+    {"temperature": 500, "humidity": 50, "sunlight": 50},
+    {"temperature": 600, "humidity": 60, "sunlight": 60},
+    {"temperature": 700, "humidity": 70, "sunlight": 70},
+    {"temperature": 800, "humidity": 80, "sunlight": 80},
+    {"temperature": 900, "humidity": 90, "sunlight": 90},
+    {"temperature": 1000, "humidity": 100, "sunlight": 100},
+    {"temperature": 1100, "humidity": 110, "sunlight": 110},
+    {"temperature": 1200, "humidity": 120, "sunlight": 120},
+    {"temperature": 1300, "humidity": 130, "sunlight": 130},
+    {"temperature": 1400, "humidity": 140, "sunlight": 140},
+    {"temperature": 1500, "humidity": 150, "sunlight": 150}
 ]
 
 # Insert all documents into the collection

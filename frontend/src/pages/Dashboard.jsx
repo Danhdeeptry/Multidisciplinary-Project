@@ -59,62 +59,57 @@ const FarmCard = ({ label, image }) => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const localData = getFarmData();
-      if (localData) {
-        setFarmData(localData);
-        return;
-      }
-      if (label === "FARM1") {
-        try {
-          const response = await axios.get("http://127.0.0.1:8000/farms");
-          const { temperature, humidity, sunlight } = response.data;
-          setFarmData({
-            temperature: `${temperature}°C`,
-            humidity: `${humidity}%`,
-            sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
-          });
-        } catch (error) {
-          console.error("Error fetching Farm 1 data:", error);
-        }
-      } else {
-        // Mock data cho FARM2 và FARM3 (dùng số lux thay vì mô tả mức)
-        const mockData = {
-          FARM2: {
-            temperature: "24°C",
-            humidity: "72%",
-            sunlight: "60 lux",
-          },
-          FARM3: {
-            temperature: "29°C",
-            humidity: "58%",
-            sunlight: "95 lux",
-          }
-        };
-        setFarmData(mockData[label] || { temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
-      }
-    };
-    fetchData();
+  let intervalId;
 
-    // Lắng nghe sự kiện storage để tự động cập nhật khi localStorage thay đổi (đa tab)
-    const handleStorage = (e) => {
-      if (e.key === `farmStatus_${label}`) {
-        const localData = getFarmData();
-        if (localData) setFarmData(localData);
+  const fetchData = async () => {
+    if (label === "FARM1") {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/farms");
+        const { temperature, humidity, sunlight } = response.data;
+        const formattedData = {
+        temperature,
+        humidity,
+        sunlight
+      };
+        setFarmData({
+          temperature: `${temperature}°C`,
+          humidity: `${humidity}%`,
+          sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
+        });
+        localStorage.setItem(`farmStatus_${label}`, JSON.stringify(formattedData));
+      } catch (error) {
+        console.error("Error fetching Farm 1 data:", error);
       }
-    };
-    window.addEventListener('storage', handleStorage);
-    // Lắng nghe custom event để cập nhật ngay cả khi ở cùng 1 tab
-    const handleCustom = () => {
-      const localData = getFarmData();
-      if (localData) setFarmData(localData);
-    };
-    window.addEventListener('farmStatusChanged', handleCustom);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('farmStatusChanged', handleCustom);
-    };
-  }, [label]);
+    } else {
+      const mockData = {
+        FARM2: {
+          temperature: "24°C",
+          humidity: "72%",
+          sunlight: "60 lux",
+        },
+        FARM3: {
+          temperature: "29°C",
+          humidity: "58%",
+          sunlight: "95 lux",
+        }
+      };
+      setFarmData(mockData[label] || { temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
+    }
+  };
+
+  // Initial fetch
+  fetchData();
+
+  // Set interval only for FARM1
+  if (label === "FARM1") {
+    intervalId = setInterval(fetchData, 5000); // Every 5 seconds
+  }
+
+  // Cleanup on unmount
+  return () => {
+    if (intervalId) clearInterval(intervalId);
+  };
+}, [label]);
   
   return (
     <div 

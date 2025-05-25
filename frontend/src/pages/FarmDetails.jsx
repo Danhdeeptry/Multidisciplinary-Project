@@ -198,7 +198,7 @@ const FarmDetails = () => {
 
   const handleSave = () => {
     setCurrentStatus({ temperature, humidity, sunlight });
-    setAppliedStatus({ temperature, humidity, sunlight });
+    setAppliedStatus(getInitialStatus());
     localStorage.setItem(storageKey, JSON.stringify({ temperature, humidity, sunlight }));
     window.dispatchEvent(new Event('farmStatusChanged'));
   };
@@ -233,7 +233,7 @@ const FarmDetails = () => {
           }]
         }
       }));
-    }, 3000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [appliedStatus]);
 
