@@ -15,6 +15,11 @@ import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaLeaf } from 'react-icons/fa';
+import Tabs from '../components/Tabs';
+import LeafHealthWidget from '../components/widgets/LeafHealthWidget';
+import TemperatureWidget from '../components/widgets/TemperatureWidget';
+import HumidityWidget from '../components/widgets/HumidityWidget';
+import LightWidget from '../components/widgets/LightWidget';
 
 // Register ChartJS components
 ChartJS.register(
@@ -52,21 +57,21 @@ const FarmDetails = () => {
   const { farmId } = useParams();
   const navigate = useNavigate();
   const storageKey = `farmStatus_${farmId?.toUpperCase()}`;
-  // Lấy trạng thái từ localStorage nếu có, nếu không thì lấy mockStatus
+  
   const getInitialStatus = () => {
     const local = localStorage.getItem(storageKey);
     if (local) return JSON.parse(local);
     return mockStatus[farmId?.toUpperCase()] || { temperature: 0, humidity: 0, sunlight: 0 };
   };
+
   const [appliedStatus, setAppliedStatus] = useState(getInitialStatus());
   const [currentStatus, setCurrentStatus] = useState(getInitialStatus());
   const [temperature, setTemperature] = useState(currentStatus.temperature);
   const [humidity, setHumidity] = useState(currentStatus.humidity);
-  // sunlight luôn là số lux
   const [sunlight, setSunlight] = useState(currentStatus.sunlight);
   const leafStatus = mockLeafStatus[farmId?.toUpperCase()] || { health: 0, color: "#757575", status: "Unknown" };
+  const [isLightOn, setIsLightOn] = useState(true);
 
-  // Khi farmId thay đổi (chuyển farm), cập nhật lại state từ localStorage
   useEffect(() => {
     const status = getInitialStatus();
     setAppliedStatus(status);
@@ -203,14 +208,6 @@ const FarmDetails = () => {
     }
   };
 
-  const handleSave = () => {
-    setCurrentStatus({ temperature, humidity, sunlight });
-    setAppliedStatus(getInitialStatus());
-    localStorage.setItem(storageKey, JSON.stringify({ temperature, humidity, sunlight }));
-    window.dispatchEvent(new Event('farmStatusChanged'));
-  };
-
-  // Cập nhật biểu đồ mỗi 3s: nếu đã nhấn Save thì dùng giá trị appliedStatus, chưa thì random
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -244,7 +241,6 @@ const FarmDetails = () => {
     return () => clearInterval(interval);
   }, [appliedStatus]);
 
-  // Add gradients to chart lines
   const getChartDataWithGradient = (data, ref, colorTop, colorBottom) => {
     if (ref.current && ref.current.ctx) {
       const ctx = ref.current.ctx;
@@ -258,6 +254,22 @@ const FarmDetails = () => {
       };
     }
     return data;
+  };
+
+  const handleTemperatureChange = (value) => {
+    setTemperature(value);
+    setCurrentStatus((prev) => ({ ...prev, temperature: value }));
+    setAppliedStatus((prev) => ({ ...prev, temperature: value }));
+  };
+  const handleHumidityChange = (value) => {
+    setHumidity(value);
+    setCurrentStatus((prev) => ({ ...prev, humidity: value }));
+    setAppliedStatus((prev) => ({ ...prev, humidity: value }));
+  };
+  const handleSunlightChange = (value) => {
+    setSunlight(value);
+    setCurrentStatus((prev) => ({ ...prev, sunlight: value }));
+    setAppliedStatus((prev) => ({ ...prev, sunlight: value }));
   };
 
   return (
@@ -298,216 +310,90 @@ const FarmDetails = () => {
         </div>
       </div>
 
-      {/* Charts */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: 32,
-        maxWidth: 1200,
-        margin: '0 auto',
-        padding: '24px 0 48px 0'
-      }}>
-        {/* Temperature Chart */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(255,99,132,0.08)', padding: 32 }}>
-          <h2 style={{ color: '#ff6384', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>🌡️ Temperature</h2>
-          <div style={{ height: 300 }}>
-            <Line
-              ref={tempRef}
-              options={baseOptions}
-              data={getChartDataWithGradient(chartData.temperature, tempRef, 'rgba(255,99,132,0.7)', 'rgba(255,99,132,0.05)')}
-            />
-          </div>
-        </div>
-        {/* Humidity Chart */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(53,162,235,0.08)', padding: 32 }}>
-          <h2 style={{ color: '#3592eb', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>💧 Humidity</h2>
-          <div style={{ height: 300 }}>
-            <Line
-              ref={humRef}
-              options={baseOptions}
-              data={getChartDataWithGradient(chartData.humidity, humRef, 'rgba(53,162,235,0.7)', 'rgba(53,162,235,0.05)')}
-            />
-          </div>
-        </div>
-        {/* Sunlight Chart */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(255,206,86,0.08)', padding: 32 }}>
-          <h2 style={{ color: '#ffce56', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>☀️ Sunlight</h2>
-          <div style={{ height: 300 }}>
-            <Line
-              ref={sunRef}
-              options={baseOptions}
-              data={getChartDataWithGradient(chartData.sunlight, sunRef, 'rgba(255,206,86,0.7)', 'rgba(255,206,86,0.05)')}
-            />
-          </div>
-        </div>
-
-        {/* Control Box */}
-        <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(46,125,50,0.08)', padding: 32 }}>
-          <h2 style={{ color: '#2e7d32', fontWeight: 700, fontSize: 22, marginBottom: 24, textAlign: 'center' }}>Adjust Parameters</h2>
-          
-          {/* Leaf Status Box */}
-          <div style={{
-            margin: '0 auto 32px auto',
-            maxWidth: 420,
-            background: '#f8f9fa',
-            borderRadius: 16,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            border: '2px solid #e0e0e0',
-            padding: 24,
-            position: 'relative',
-            textAlign: 'center'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: leafStatus.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontSize: 28,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.10)'
-              }}>
-                <FaLeaf />
-              </div>
-              <div>
-                <div style={{ fontWeight: 600, color: '#333', fontSize: 16 }}>Leaf Health</div>
-                <div style={{ color: leafStatus.color, fontWeight: 700, fontSize: 18 }}>{leafStatus.status}</div>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 0 48px 0' }}>
+        <Tabs tabs={['Graph', 'Monitoring']}>
+          {/* Tab 1: Graph */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 32 }}>
+            {/* Temperature Chart */}
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(255,99,132,0.08)', padding: 32 }}>
+              <h2 style={{ color: '#ff6384', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>🌡️ Temperature</h2>
+              <div style={{ height: 300 }}>
+                <Line
+                  ref={tempRef}
+                  options={baseOptions}
+                  data={getChartDataWithGradient(chartData.temperature, tempRef, 'rgba(255,99,132,0.7)', 'rgba(255,99,132,0.05)')}
+                />
               </div>
             </div>
-            <div style={{
-              background: '#fff',
-              padding: '10px 20px',
-              borderRadius: 24,
-              fontWeight: 600,
-              color: leafStatus.color,
-              fontSize: 18,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              display: 'inline-block',
-              marginBottom: 12
-            }}>{leafStatus.health}%</div>
-            <div style={{
-              height: 12,
-              background: '#e0e0e0',
-              borderRadius: 6,
-              overflow: 'hidden',
-              margin: '0 0 0 0'
+            {/* Humidity Chart */}
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(53,162,235,0.08)', padding: 32 }}>
+              <h2 style={{ color: '#3592eb', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>💧 Humidity</h2>
+              <div style={{ height: 300 }}>
+                <Line
+                  ref={humRef}
+                  options={baseOptions}
+                  data={getChartDataWithGradient(chartData.humidity, humRef, 'rgba(53,162,235,0.7)', 'rgba(53,162,235,0.05)')}
+                />
+              </div>
+            </div>
+            {/* Sunlight Chart */}
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(255,206,86,0.08)', padding: 32 }}>
+              <h2 style={{ color: '#ffce56', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>☀️ Sunlight</h2>
+              <div style={{ height: 300 }}>
+                <Line
+                  ref={sunRef}
+                  options={baseOptions}
+                  data={getChartDataWithGradient(chartData.sunlight, sunRef, 'rgba(255,206,86,0.7)', 'rgba(255,206,86,0.05)')}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Tab 2: Monitoring */}
+          <div>
+            <h2 style={{ color: '#2e7d32', fontWeight: 700, fontSize: 22, marginBottom: 24, textAlign: 'center' }}>Adjust Parameters</h2>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr',
+              gridTemplateRows: '1fr 1fr',
+              gap: 24,
+              marginBottom: 32,
+              minHeight: 320
             }}>
-              <div style={{
-                width: `${leafStatus.health}%`,
-                height: '100%',
-                background: leafStatus.color,
-                transition: 'width 0.3s ease',
-                borderRadius: 6
-              }} />
+              <div style={{ gridColumn: '1/2', gridRow: '1/2' }}>
+                <TemperatureWidget 
+                  temperature={temperature}
+                  onTemperatureChange={handleTemperatureChange}
+                  farmId={farmId}
+                />
+              </div>
+              <div style={{ gridColumn: '2/3', gridRow: '1/2' }}>
+                <HumidityWidget 
+                  humidity={humidity}
+                  onHumidityChange={handleHumidityChange}
+                  farmId={farmId}
+                />
+              </div>
+              <div style={{ gridColumn: '1/2', gridRow: '2/3' }}>
+                <LightWidget 
+                  sunlight={sunlight}
+                  isLightOn={isLightOn}
+                  onSunlightChange={handleSunlightChange}
+                  onLightToggle={() => setIsLightOn(v => !v)}
+                  farmId={farmId}
+                />
+              </div>
+              <div style={{ gridColumn: '2/3', gridRow: '2/3' }}>
+                <LeafHealthWidget 
+                  health={leafStatus.health}
+                  color={leafStatus.color}
+                  status={leafStatus.status}
+                />
+              </div>
             </div>
           </div>
-
-          {/* Current Status */}
-          <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 32 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 28 }}>🌡️</div>
-              <div style={{ color: '#333', fontWeight: 600 }}>Temperature</div>
-              <div style={{ color: '#2e7d32', fontWeight: 700, fontSize: 20 }}>{currentStatus.temperature}°C</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 28 }}>💧</div>
-              <div style={{ color: '#333', fontWeight: 600 }}>Humidity</div>
-              <div style={{ color: '#2e7d32', fontWeight: 700, fontSize: 20 }}>{currentStatus.humidity}%</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 28 }}>☀️</div>
-              <div style={{ color: '#333', fontWeight: 600 }}>Sunlight</div>
-              <div style={{ color: '#2e7d32', fontWeight: 700, fontSize: 20 }}>{currentStatus.sunlight} lux</div>
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div style={{ marginBottom: 32 }}>
-            <label style={{ fontWeight: 600, color: '#333', marginBottom: 8, display: 'block' }}>🌡️ Temperature (°C)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <input 
-                type="number" 
-                min={0} 
-                max={50} 
-                value={temperature} 
-                onChange={e => setTemperature(Number(e.target.value))} 
-                style={{ border: '1px solid #e0e0e0', borderRadius: 6, padding: '6px 12px', width: 80, fontSize: 16 }} 
-              />
-              <input 
-                type="range" 
-                min={0} 
-                max={50} 
-                value={temperature} 
-                onChange={e => setTemperature(Number(e.target.value))} 
-                style={{ flex: 1 }} 
-              />
-              <span style={{ minWidth: 32, textAlign: 'right', color: '#2e7d32', fontWeight: 600 }}>{temperature}°C</span>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 32 }}>
-            <label style={{ fontWeight: 600, color: '#333', marginBottom: 8, display: 'block' }}>💧 Humidity (%)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <input 
-                type="number" 
-                min={0} 
-                max={100} 
-                value={humidity} 
-                onChange={e => setHumidity(Number(e.target.value))} 
-                style={{ border: '1px solid #e0e0e0', borderRadius: 6, padding: '6px 12px', width: 80, fontSize: 16 }} 
-              />
-              <input 
-                type="range" 
-                min={0} 
-                max={100} 
-                value={humidity} 
-                onChange={e => setHumidity(Number(e.target.value))} 
-                style={{ flex: 1 }} 
-              />
-              <span style={{ minWidth: 32, textAlign: 'right', color: '#2e7d32', fontWeight: 600 }}>{humidity}%</span>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 32 }}>
-            <label style={{ fontWeight: 600, color: '#333', marginBottom: 8, display: 'block' }}>☀️ Sunlight (lux)</label>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0 }}>
-              <input
-                type="range"
-                min={0}
-                max={1600}
-                step={1}
-                value={sunlight}
-                onChange={e => setSunlight(Number(e.target.value))}
-                style={{ width: '90%' }}
-              />
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 8, color: '#2e7d32', fontWeight: 700, fontSize: 16 }}>{sunlight} lux</div>
-          </div>
-
-          <button 
-            style={{
-              width: '100%',
-              background: '#2e7d32',
-              color: '#fff',
-              border: 'none',
-              padding: '12px 0',
-              borderRadius: 8,
-              fontWeight: 600,
-              fontSize: 18,
-              boxShadow: '0 2px 8px rgba(46,125,50,0.08)',
-              cursor: 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseOver={e => e.currentTarget.style.background = '#1b5e20'}
-            onMouseOut={e => e.currentTarget.style.background = '#2e7d32'}
-            onClick={handleSave}
-          >
-            Save Changes
-          </button>
-        </div>
+        </Tabs>
       </div>
     </div>
   );
