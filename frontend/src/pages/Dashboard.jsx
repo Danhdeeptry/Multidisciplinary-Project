@@ -59,20 +59,51 @@ const FarmCard = ({ label, image }) => {
   };
 
   useEffect(() => {
-    // Không fetch API cho FARM1 nữa, chỉ lấy từ localStorage
-    setFarmData(getFarmData());
+  let intervalId;
 
-    // Lắng nghe sự kiện farmStatusChanged để cập nhật lại dữ liệu
-    const handleStatusChange = () => {
-      setFarmData(getFarmData());
-    };
-    window.addEventListener('farmStatusChanged', handleStatusChange);
+  const fetchData = async () => {
+    if (label === "FARM1") {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/farms");
+        const { temperature, humidity, sunlight } = response.data;
+        setFarmData({
+          temperature: `${temperature}°C`,
+          humidity: `${humidity}%`,
+          sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
+        });
+      } catch (error) {
+        console.error("Error fetching Farm 1 data:", error);
+      }
+    } else {
+      const mockData = {
+        FARM2: {
+          temperature: "24°C",
+          humidity: "72%",
+          sunlight: "60 lux",
+        },
+        FARM3: {
+          temperature: "29°C",
+          humidity: "58%",
+          sunlight: "95 lux",
+        }
+      };
+      setFarmData(mockData[label] || { temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
+    }
+  };
 
-    // Cleanup on unmount
-    return () => {
-      window.removeEventListener('farmStatusChanged', handleStatusChange);
-    };
-  }, [label]);
+  // Initial fetch
+  fetchData();
+
+  // Set interval only for FARM1
+  if (label === "FARM1") {
+    intervalId = setInterval(fetchData, 5000); // Every 5 seconds
+  }
+
+  // Cleanup on unmount
+  return () => {
+    if (intervalId) clearInterval(intervalId);
+  };
+}, [label]);
   
   return (
     <div 
