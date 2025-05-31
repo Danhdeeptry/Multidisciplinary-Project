@@ -297,7 +297,7 @@ const FarmDetails = () => {
         fill: false,
       },
       {
-        label: 'Elapsed hours (h)',
+        label: 'Giờ đã trôi qua (h)',
         data: [],
         borderColor: '#e53935',
         backgroundColor: 'rgba(229,57,53,0.1)',
@@ -329,8 +329,8 @@ const FarmDetails = () => {
               return `DLI: ${value.toFixed(3)} mol·m⁻²·day⁻¹`;
             } else if (label === 'DLI Progress (%)') {
               return `Tiến độ DLI: ${value.toFixed(2)} %`;
-            } else if (label === 'Elapsed hours (h)') {
-              return `Elapsed hours: ${value.toFixed(2)} h`;
+            } else if (label === 'Giờ đã trôi qua (h)') {
+              return `Giờ đã trôi qua: ${value.toFixed(2)} h`;
             }
             return `${label}: ${value}`;
           }
@@ -348,7 +348,7 @@ const FarmDetails = () => {
               return value.toFixed(2);
             } else if (context.dataset.label === 'DLI Progress (%)') {
               return value.toFixed(1) + '%';
-            } else if (context.dataset.label === 'Elapsed hours (h)') {
+            } else if (context.dataset.label === 'Giờ đã trôi qua (h)') {
               return value.toFixed(2) + 'h';
             }
           }
@@ -390,7 +390,7 @@ const FarmDetails = () => {
         display: true,
         position: 'right',
         offset: true,
-        title: { display: true, text: 'Elapsed hours (h)', color: '#e53935', font: { weight: 'bold' } },
+        title: { display: true, text: 'Giờ đã trôi qua (h)', color: '#e53935', font: { weight: 'bold' } },
         grid: { drawOnChartArea: false },
         ticks: { color: '#e53935' },
         min: 0, max: 24

@@ -145,6 +145,7 @@ const FarmDetails = () => {
   // Refs for chart instances
   const tempRef = useRef();
   const humRef = useRef();
+  const sunRef = useRef();
 
   // Chart options
   const baseOptions = {
@@ -287,7 +288,7 @@ const FarmDetails = () => {
         fill: false,
       },
       {
-        label: 'DLI Progress (%)',
+        label: 'dli_progress_percent',
         data: [],
         borderColor: '#43a047',
         backgroundColor: 'rgba(67,160,71,0.1)',
@@ -297,7 +298,7 @@ const FarmDetails = () => {
         fill: false,
       },
       {
-        label: 'Elapsed hours (h)',
+        label: 'day_elapsed_hours',
         data: [],
         borderColor: '#e53935',
         backgroundColor: 'rgba(229,57,53,0.1)',
@@ -317,54 +318,13 @@ const FarmDetails = () => {
     plugins: {
       legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#444' } },
       title: { display: true, text: 'Time series chart', color: '#2196f3', font: { size: 18, weight: 'bold' } },
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            let value = context.parsed.y;
-            if (label === 'daily_light_integral') {
-              return `DLI: ${value.toFixed(3)} mol·m⁻²·day⁻¹`;
-            } else if (label === 'DLI Progress (%)') {
-              return `Tiến độ DLI: ${value.toFixed(2)} %`;
-            } else if (label === 'Elapsed hours (h)') {
-              return `Elapsed hours: ${value.toFixed(2)} h`;
-            }
-            return `${label}: ${value}`;
-          }
-        }
-      },
-      datalabels: {
-        display: true,
-        align: 'end',
-        anchor: 'end',
-        formatter: function(value, context) {
-          // Hiển thị giá trị cuối cùng trên mỗi đường
-          const dataset = context.dataset.data;
-          if (context.dataIndex === dataset.length - 1) {
-            if (context.dataset.label === 'daily_light_integral') {
-              return value.toFixed(2);
-            } else if (context.dataset.label === 'DLI Progress (%)') {
-              return value.toFixed(1) + '%';
-            } else if (context.dataset.label === 'Elapsed hours (h)') {
-              return value.toFixed(2) + 'h';
-            }
-          }
-          return '';
-        },
-        color: function(context) {
-          return context.dataset.borderColor;
-        },
-        font: { weight: 'bold', size: 12 }
-      }
+      tooltip: { enabled: true, mode: 'index', intersect: false }
     },
     scales: {
       x: {
         type: 'time',
         time: { unit: 'minute', displayFormats: { minute: 'HH:mm:ss' } },
-        title: { display: true, text: 'Thời gian', color: '#888', font: { weight: 'bold' } },
+        title: { display: true, text: 'Time', color: '#888', font: { weight: 'bold' } },
         grid: { color: '#eee' }
       },
       y: {
@@ -382,7 +342,7 @@ const FarmDetails = () => {
         position: 'right',
         title: { display: true, text: 'DLI Progress (%)', color: '#43a047', font: { weight: 'bold' } },
         grid: { drawOnChartArea: false },
-        ticks: { color: '#43a047', callback: val => val + '%' },
+        ticks: { color: '#43a047' },
         min: 0, max: 100
       },
       y2: {
@@ -390,7 +350,7 @@ const FarmDetails = () => {
         display: true,
         position: 'right',
         offset: true,
-        title: { display: true, text: 'Elapsed hours (h)', color: '#e53935', font: { weight: 'bold' } },
+        title: { display: true, text: 'Day elapsed (hours)', color: '#e53935', font: { weight: 'bold' } },
         grid: { drawOnChartArea: false },
         ticks: { color: '#e53935' },
         min: 0, max: 24

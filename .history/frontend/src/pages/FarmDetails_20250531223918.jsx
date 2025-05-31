@@ -145,6 +145,7 @@ const FarmDetails = () => {
   // Refs for chart instances
   const tempRef = useRef();
   const humRef = useRef();
+  const sunRef = useRef();
 
   // Chart options
   const baseOptions = {
@@ -271,157 +272,6 @@ const FarmDetails = () => {
     setAppliedStatus((prev) => ({ ...prev, sunlight: value }));
   };
 
-  // Xóa sunlight chart và thêm chart mới
-  const dliRef = useRef();
-  const [dliChartData, setDliChartData] = useState({
-    labels: [],
-    datasets: [
-      {
-        label: 'daily_light_integral',
-        data: [],
-        borderColor: '#2196f3',
-        backgroundColor: 'rgba(33,150,243,0.1)',
-        yAxisID: 'y',
-        pointRadius: 4,
-        tension: 0.3,
-        fill: false,
-      },
-      {
-        label: 'DLI Progress (%)',
-        data: [],
-        borderColor: '#43a047',
-        backgroundColor: 'rgba(67,160,71,0.1)',
-        yAxisID: 'y1',
-        pointRadius: 4,
-        tension: 0.3,
-        fill: false,
-      },
-      {
-        label: 'Elapsed hours (h)',
-        data: [],
-        borderColor: '#e53935',
-        backgroundColor: 'rgba(229,57,53,0.1)',
-        yAxisID: 'y2',
-        pointRadius: 4,
-        tension: 0.3,
-        fill: false,
-      }
-    ]
-  });
-
-  const dliOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    stacked: false,
-    plugins: {
-      legend: { position: 'top', labels: { font: { weight: 'bold' }, color: '#444' } },
-      title: { display: true, text: 'Time series chart', color: '#2196f3', font: { size: 18, weight: 'bold' } },
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            let value = context.parsed.y;
-            if (label === 'daily_light_integral') {
-              return `DLI: ${value.toFixed(3)} mol·m⁻²·day⁻¹`;
-            } else if (label === 'DLI Progress (%)') {
-              return `Tiến độ DLI: ${value.toFixed(2)} %`;
-            } else if (label === 'Elapsed hours (h)') {
-              return `Elapsed hours: ${value.toFixed(2)} h`;
-            }
-            return `${label}: ${value}`;
-          }
-        }
-      },
-      datalabels: {
-        display: true,
-        align: 'end',
-        anchor: 'end',
-        formatter: function(value, context) {
-          // Hiển thị giá trị cuối cùng trên mỗi đường
-          const dataset = context.dataset.data;
-          if (context.dataIndex === dataset.length - 1) {
-            if (context.dataset.label === 'daily_light_integral') {
-              return value.toFixed(2);
-            } else if (context.dataset.label === 'DLI Progress (%)') {
-              return value.toFixed(1) + '%';
-            } else if (context.dataset.label === 'Elapsed hours (h)') {
-              return value.toFixed(2) + 'h';
-            }
-          }
-          return '';
-        },
-        color: function(context) {
-          return context.dataset.borderColor;
-        },
-        font: { weight: 'bold', size: 12 }
-      }
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: { unit: 'minute', displayFormats: { minute: 'HH:mm:ss' } },
-        title: { display: true, text: 'Thời gian', color: '#888', font: { weight: 'bold' } },
-        grid: { color: '#eee' }
-      },
-      y: {
-        type: 'linear',
-        display: true,
-        position: 'left',
-        title: { display: true, text: 'DLI (mol·m⁻²·day⁻¹)', color: '#2196f3', font: { weight: 'bold' } },
-        grid: { color: '#eee' },
-        ticks: { color: '#2196f3' },
-        min: 0, max: 25
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        title: { display: true, text: 'DLI Progress (%)', color: '#43a047', font: { weight: 'bold' } },
-        grid: { drawOnChartArea: false },
-        ticks: { color: '#43a047', callback: val => val + '%' },
-        min: 0, max: 100
-      },
-      y2: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        offset: true,
-        title: { display: true, text: 'Elapsed hours (h)', color: '#e53935', font: { weight: 'bold' } },
-        grid: { drawOnChartArea: false },
-        ticks: { color: '#e53935' },
-        min: 0, max: 24
-      }
-    }
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      setDliChartData(prev => {
-        const lastDli = prev.datasets[0].data.length > 0 ? prev.datasets[0].data[prev.datasets[0].data.length-1] : 0;
-        const lastProgress = prev.datasets[1].data.length > 0 ? prev.datasets[1].data[prev.datasets[1].data.length-1] : 0;
-        const lastHour = prev.datasets[2].data.length > 0 ? prev.datasets[2].data[prev.datasets[2].data.length-1] : 0;
-        // Giả lập dữ liệu tăng dần
-        const newDli = Math.min(25, lastDli + Math.random()*2);
-        const newProgress = Math.min(100, lastProgress + Math.random()*2);
-        const newHour = Math.min(24, lastHour + 0.05 + Math.random()*0.05);
-        return {
-          labels: [...prev.labels, now].slice(-20),
-          datasets: [
-            { ...prev.datasets[0], data: [...prev.datasets[0].data, newDli].slice(-20) },
-            { ...prev.datasets[1], data: [...prev.datasets[1].data, newProgress].slice(-20) },
-            { ...prev.datasets[2], data: [...prev.datasets[2].data, newHour].slice(-20) }
-          ]
-        };
-      });
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(120deg, #e0f7fa 0%, #f5f8f5 100%)', padding: 0 }}>
       {/* Header with return button */}
@@ -487,14 +337,13 @@ const FarmDetails = () => {
               </div>
             </div>
             {/* Sunlight Chart */}
-            {/* DLI Multi-line Chart */}
-            <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(33,150,243,0.08)', padding: 32 }}>
-              <h2 style={{ color: '#2196f3', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>☀️ DLI & Progress</h2>
-              <div style={{ height: 340 }}>
+            <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px rgba(255,206,86,0.08)', padding: 32 }}>
+              <h2 style={{ color: '#ffce56', fontWeight: 700, fontSize: 22, marginBottom: 12 }}>☀️ Sunlight</h2>
+              <div style={{ height: 300 }}>
                 <Line
-                  ref={dliRef}
-                  options={dliOptions}
-                  data={dliChartData}
+                  ref={sunRef}
+                  options={baseOptions}
+                  data={getChartDataWithGradient(chartData.sunlight, sunRef, 'rgba(255,206,86,0.7)', 'rgba(255,206,86,0.05)')}
                 />
               </div>
             </div>
