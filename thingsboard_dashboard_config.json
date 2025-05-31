@@ -1,0 +1,273 @@
+{
+  "dashboard_name": "Smart Farm IoT Dashboard",
+  "description": "Comprehensive Smart Farm monitoring and control dashboard with DHT20, Light Sensor, and Grow Light automation",
+  "widgets": [
+    {
+      "type": "Latest Values",
+      "title": "Environmental Sensors",
+      "size": { "width": 6, "height": 4 },
+      "datasources": [
+        {
+          "type": "device",
+          "name": "ESP32 Smart Farm",
+          "keys": ["temperature", "humidity", "light_intensity"]
+        }
+      ],
+      "settings": {
+        "showUnit": true,
+        "decimals": 1,
+        "style": "card"
+      }
+    },
+    {
+      "type": "Time Series Chart",
+      "title": "Temperature & Humidity Trends",
+      "size": { "width": 12, "height": 6 },
+      "datasources": [
+        {
+          "type": "device",
+          "name": "ESP32 Smart Farm",
+          "keys": ["temperature", "humidity"]
+        }
+      ],
+      "settings": {
+        "timeWindow": "1 hour",
+        "yAxis": {
+          "min": 0,
+          "max": 100
+        }
+      }
+    },
+    {
+      "type": "Time Series Chart",
+      "title": "Light Intensity & Grow Light Status",
+      "size": { "width": 12, "height": 6 },
+      "datasources": [
+        {
+          "type": "device",
+          "name": "ESP32 Smart Farm",
+          "keys": ["light_intensity", "grow_light_active"]
+        }
+      ],
+      "settings": {
+        "timeWindow": "1 hour",
+        "yAxis": {
+          "min": 0,
+          "max": 1000
+        }
+      }
+    },
+    {
+      "type": "Control Widget",
+      "title": "Grow Light Control",
+      "size": { "width": 4, "height": 3 },
+      "targetDevice": "ESP32 Smart Farm",
+      "rpcMethod": "setGrowLightState",
+      "widgetType": "switch",
+      "settings": {
+        "title": "Grow Light",
+        "onLabel": "ON",
+        "offLabel": "OFF"
+      }
+    },
+    {
+      "type": "Control Widget",
+      "title": "Auto Mode Control",
+      "size": { "width": 4, "height": 3 },
+      "targetDevice": "ESP32 Smart Farm",
+      "rpcMethod": "setAutoLightMode",
+      "widgetType": "switch",
+      "settings": {
+        "title": "Auto Light Mode",
+        "onLabel": "AUTO",
+        "offLabel": "MANUAL"
+      }
+    },
+    {
+      "type": "RPC Button",
+      "title": "Reset DLI",
+      "size": { "width": 4, "height": 3 },
+      "targetDevice": "ESP32 Smart Farm",
+      "rpcMethod": "resetDLI",
+      "settings": {
+        "buttonText": "Reset Daily Light Integral",
+        "confirmMessage": "Are you sure you want to reset DLI?"
+      }
+    },
+    {
+      "type": "Digital Gauge",
+      "title": "Daily Light Integral (DLI)",
+      "size": { "width": 6, "height": 4 },
+      "datasources": [
+        {
+          "type": "device",
+          "name": "ESP32 Smart Farm",
+          "keys": ["daily_light_integral"]
+        }
+      ],
+      "settings": {
+        "minValue": 0,
+        "maxValue": 50,
+        "unit": "mol/m²/day",
+        "segments": [
+          { "from": 0, "to": 10, "color": "red", "label": "Low" },
+          { "from": 10, "to": 30, "color": "green", "label": "Optimal" },
+          { "from": 30, "to": 50, "color": "orange", "label": "High" }
+        ]
+      }
+    },
+    {
+      "type": "Progress Bar",
+      "title": "DLI Progress",
+      "size": { "width": 6, "height": 2 },
+      "datasources": [
+        {
+          "type": "device",
+          "name": "ESP32 Smart Farm",
+          "keys": ["dli_progress_percent"]
+        }
+      ],
+      "settings": {
+        "maxValue": 100,
+        "unit": "%"
+      }
+    },
+    {
+      "type": "State Widget",
+      "title": "System Status",
+      "size": { "width": 6, "height": 4 },
+      "datasources": [
+        {
+          "type": "device",
+          "name": "ESP32 Smart Farm",
+          "keys": ["grow_light_active", "auto_mode_active", "alert_type"]
+        }
+      ],
+      "settings": {
+        "states": [
+          {
+            "value": true,
+            "color": "green",
+            "text": "Active"
+          },
+          {
+            "value": false,
+            "color": "red",
+            "text": "Inactive"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Alarm Widget",
+      "title": "Smart Farm Alerts",
+      "size": { "width": 12, "height": 4 },
+      "datasources": [
+        {
+          "type": "device",
+          "name": "ESP32 Smart Farm",
+          "keys": ["alert_type", "alert_message", "alert_value"]
+        }
+      ],
+      "settings": {
+        "alarmTypes": ["LOW_LIGHT", "HIGH_LIGHT", "SENSOR_ERROR"],
+        "showAcknowledged": false,
+        "timeWindow": "24 hours"
+      }
+    }
+  ],
+  "shared_attributes": [
+    {
+      "key": "lightThresholdLow",
+      "type": "double",
+      "default": 200.0,
+      "description": "Light threshold for turning ON grow light (lux)"
+    },
+    {
+      "key": "lightThresholdHigh", 
+      "type": "double",
+      "default": 500.0,
+      "description": "Light threshold for turning OFF grow light (lux)"
+    },
+    {
+      "key": "dliTarget",
+      "type": "double", 
+      "default": 20.0,
+      "description": "Target Daily Light Integral (mol/m²/day)"
+    },
+    {
+      "key": "autoLightMode",
+      "type": "boolean",
+      "default": true,
+      "description": "Enable automatic grow light control"
+    },
+    {
+      "key": "alertEnabled",
+      "type": "boolean",
+      "default": true,
+      "description": "Enable alert system"
+    },
+    {
+      "key": "growLightState",
+      "type": "boolean",
+      "default": false,
+      "description": "Current grow light state"
+    }
+  ],
+  "rpc_methods": [
+    {
+      "method": "setGrowLightState",
+      "params": "boolean",
+      "description": "Manually control grow light state"
+    },
+    {
+      "method": "setAutoLightMode", 
+      "params": "boolean",
+      "description": "Enable/disable automatic light control"
+    },
+    {
+      "method": "resetDLI",
+      "params": "none",
+      "description": "Reset Daily Light Integral counter"
+    },
+    {
+      "method": "readSensorData",
+      "params": "none", 
+      "description": "Get current sensor readings and system status"
+    },
+    {
+      "method": "setLedSwitchValue",
+      "params": "boolean",
+      "description": "Control status LED"
+    }
+  ],
+  "setup_instructions": [
+    "1. Create a new device in ThingsBoard with name 'ESP32 Smart Farm'",
+    "2. Copy the device access token and update TOKEN in main.cpp",
+    "3. Create a new dashboard using the widgets defined above",
+    "4. Configure shared attributes with default values",
+    "5. Test RPC methods using the control widgets",
+    "6. Set up alarms for LOW_LIGHT and HIGH_LIGHT conditions",
+    "7. Configure data export rules if needed for historical analysis"
+  ],
+  "alarm_rules": [
+    {
+      "name": "Low Light Alert",
+      "condition": "alert_type == 'LOW_LIGHT'",
+      "severity": "WARNING",
+      "action": "Send notification"
+    },
+    {
+      "name": "High Light Alert", 
+      "condition": "alert_type == 'HIGH_LIGHT'",
+      "severity": "CRITICAL",
+      "action": "Send notification"
+    },
+    {
+      "name": "Sensor Error",
+      "condition": "No data received for 60 seconds",
+      "severity": "MAJOR",
+      "action": "Send notification"
+    }
+  ]
+}

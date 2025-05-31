@@ -38,8 +38,15 @@ class TBMessage(BaseModel):
 
 @app.post("/thingsboard-data")
 def receive_tb_data(payload: TBMessage):
-    # In log để debug
-    print("✅ Received from ThingsBoard:", payload)
+    # In log chi tiết để debug
+    print("="*60)
+    print("✅ Received from ThingsBoard:")
+    print(f"Device Name: {payload.deviceName}")
+    print(f"Telemetry Type: {type(payload.telemetry)}")
+    print(f"Telemetry Keys: {list(payload.telemetry.keys())}")
+    print(f"Telemetry Data: {payload.telemetry}")
+    print(f"Telemetry JSON: {json.dumps(payload.telemetry, indent=2)}")
+    print("="*60)
     
     # Lưu payload vào database
     try:
@@ -60,7 +67,7 @@ def receive_tb_data(payload: TBMessage):
         
         conn.commit()
         conn.close()
-        print("✅ Data saved to database successfully")
+        print(f"✅ Data saved to database successfully - JSON: {telemetry_json}")
     except Exception as e:
         print(f"❌ Error saving to database: {str(e)}")
     
