@@ -64,13 +64,15 @@ const FarmCard = ({ label, image }) => {
   const fetchData = async () => {
     if (label === "FARM1") {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/farms");
+        const response = await axios.get("http://127.0.0.1:8000/YoloFarms");
         const { temperature, humidity, sunlight } = response.data;
-        setFarmData({
+        const newData = {
           temperature: `${temperature}°C`,
           humidity: `${humidity}%`,
           sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
-        });
+        };
+        setFarmData(newData);
+        localStorage.setItem("farmStatus_FARM1", JSON.stringify(newData));
       } catch (error) {
         console.error("Error fetching Farm 1 data:", error);
       }

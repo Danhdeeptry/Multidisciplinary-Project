@@ -1,97 +1,79 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import Any, Dict
-import sqlite3
-from datetime import datetime
-import os
-import json
+from fastapi.middleware.cors import CORSMiddleware
+from pymongo import MongoClient
+from bson.json_util import dumps
+from bson.objectid import ObjectId
+import asyncio
+import threading
 
 app = FastAPI()
 
-# Khởi tạo cơ sở dữ liệu
-def init_db():
-    # Tạo thư mục data nếu chưa tồn tại
-    os.makedirs('data', exist_ok=True)
+# Allow CORS (so frontend like React or JS can access)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can set this to your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# MongoDB connection setup
+client = MongoClient("mongodb://localhost:27017")
+db = client["YoloFarms"]
+collection = db["YoloFarmsData"]
+
+current_index = {"index": 0}
+latest_data = []  # Cache of latest 15 documents
+
+def cycle_data_index():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     
-    conn = sqlite3.connect('data/sensor_data.db')
-    cursor = conn.cursor()
-    
-    # Tạo bảng lưu dữ liệu telemetry
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS telemetry_data (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        device_name TEXT NOT NULL,
-        timestamp TEXT NOT NULL,
-        data_json TEXT NOT NULL
-    )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    async def toggle():
+        while True:
+            # Refresh the latest 15 docs
+            global latest_data
+            latest_data = list(collection.find().sort('_id', -1).limit(15))
+            # Make sure we keep in correct order (oldest first)
+            # latest_data.reverse()
 
-# Gọi hàm khởi tạo khi ứng dụng khởi động
-init_db()
+            # Increment index for cycling
+            # current_index["index"] = (current_index["index"] + 1) % len(latest_data)
+            await asyncio.sleep(0.1)
 
-class TBMessage(BaseModel):
-    deviceName: str
-    telemetry: Dict[str, Any]
+    loop.run_until_complete(toggle())
 
-@app.post("/thingsboard-data")
-def receive_tb_data(payload: TBMessage):
-    # In log để debug
-    print("✅ Received from ThingsBoard:", payload)
-    
-    # Lưu payload vào database
-    try:
-        conn = sqlite3.connect('data/sensor_data.db')
-        cursor = conn.cursor()
-        
-        # Chuyển đổi dữ liệu telemetry thành chuỗi JSON
-        telemetry_json = json.dumps(payload.telemetry)
-        
-        # Lấy timestamp hiện tại
-        current_time = datetime.now().isoformat()
-        
-        # Thêm dữ liệu vào database
-        cursor.execute(
-            "INSERT INTO telemetry_data (device_name, timestamp, data_json) VALUES (?, ?, ?)",
-            (payload.deviceName, current_time, telemetry_json)
-        )
-        
-        conn.commit()
-        conn.close()
-        print("✅ Data saved to database successfully")
-    except Exception as e:
-        print(f"❌ Error saving to database: {str(e)}")
-    
-    return {"status": "ok"}
-
-# Thêm endpoint để truy xuất dữ liệu
-@app.get("/data/{device_name}")
-def get_device_data(device_name: str, limit: int = 50):
-    try:
-        conn = sqlite3.connect('data/sensor_data.db')
-        cursor = conn.cursor()
-        
-        cursor.execute(
-            "SELECT timestamp, data_json FROM telemetry_data WHERE device_name = ? ORDER BY id DESC LIMIT ?",
-            (device_name, limit)
-        )
-        
-        results = []
-        for row in cursor.fetchall():
-            timestamp, data_json = row
-            data = {
-                "timestamp": timestamp,
-                "data": json.loads(data_json)
-            }
-            results.append(data)
-        
-        conn.close()
-        return {"device": device_name, "data": results}
-    except Exception as e:
-        return {"error": str(e)}
+# Start background task
+threading.Thread(target=cycle_data_index, daemon=True).start()
 
 
-#lệnh chạy
-# uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+@app.get("/YoloFarms")
+# def get_latest_data():
+#     # latest = collection.find_one(sort=[("_id", -1)])
+#     # if latest:
+#     #     return {
+#     #         "temperature": latest.get("temperature"),
+#     #         "humidity": latest.get("humidity")
+#     #     }
+#     # return {"error": "No data found"}
+
+async def get_farm_data():
+    if not latest_data:
+        # fallback in case background thread hasn't populated yet
+        docs = list(collection.find().sort('_id', -1).limit(15))
+        docs.reverse()
+    else:
+        docs = latest_data
+
+    index = current_index["index"]
+    if 0 <= index < len(docs):
+        data = docs[index]
+        return {
+            "temperature": data.get("temperature"),
+            "humidity": data.get("humidity"),
+        }
+    else:
+        return {
+            "temperature": None,
+            "humidity": None,
+        }

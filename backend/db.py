@@ -4,10 +4,10 @@ from pymongo import MongoClient
 client = MongoClient("mongodb://localhost:27017/")
 
 # Create a database called "YoloFarm"
-db = client["YoloFarm"]
+db = client["Yolo"]
 
 # Create a collection called "YoloFarmData"
-collection = db["YoloFarmData"]
+collection = db["YoloData"]
 
 # (Optional) Clear old documents first if you want fresh start
 collection.delete_many({})

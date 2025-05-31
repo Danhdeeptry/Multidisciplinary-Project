@@ -16,8 +16,8 @@ app.add_middleware(
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
-db = client["YoloFarm"]
-collection = db["YoloFarmData"]
+db = client["Yolo"]
+collection = db["YoloData"]
 
 current_index = {"index": 0}
 latest_15_data = []  # Cache of latest 15 documents
@@ -32,10 +32,10 @@ def cycle_data_index():
             global latest_15_data
             latest_15_data = list(collection.find().sort('_id', -1).limit(15))
             # Make sure we keep in correct order (oldest first)
-            latest_15_data.reverse()
+            # latest_15_data.reverse()
 
             # Increment index for cycling
-            current_index["index"] = (current_index["index"] + 1) % len(latest_15_data)
+            # current_index["index"] = (current_index["index"] + 1) % len(latest_15_data)
             await asyncio.sleep(5)
 
     loop.run_until_complete(toggle())
