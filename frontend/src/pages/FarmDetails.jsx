@@ -11,6 +11,7 @@ import {
   TimeScale,
   Filler
 } from 'chart.js';
+import axios from "axios";
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -63,23 +64,48 @@ const FarmDetails = () => {
     if (local) return JSON.parse(local);
     return mockStatus[farmId?.toUpperCase()] || { temperature: 0, humidity: 0, sunlight: 0 };
   };
+  
 
-  const [appliedStatus, setAppliedStatus] = useState(getInitialStatus());
-  const [currentStatus, setCurrentStatus] = useState(getInitialStatus());
-  const [temperature, setTemperature] = useState(currentStatus.temperature);
-  const [humidity, setHumidity] = useState(currentStatus.humidity);
-  const [sunlight, setSunlight] = useState(currentStatus.sunlight);
+  const [appliedStatus, setAppliedStatus] = useState({ temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
+  const [currentStatus, setCurrentStatus] = useState({ temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
   const leafStatus = mockLeafStatus[farmId?.toUpperCase()] || { health: 0, color: "#757575", status: "Unknown" };
   const [isLightOn, setIsLightOn] = useState(true);
 
   useEffect(() => {
-    const status = getInitialStatus();
-    setAppliedStatus(status);
-    setCurrentStatus(status);
-    setTemperature(status.temperature);
-    setHumidity(status.humidity);
-    setSunlight(status.sunlight);
-  }, [farmId]);
+    let intervalId;
+    try {
+      const fetchData = async () => {
+      const response = await axios.get("http://127.0.0.1:8000/YoloFarms");
+      const { temperature, humidity, sunlight } = response.data;
+      const newData = {
+          temperature: `${temperature}`,
+          humidity: `${humidity}`,
+          sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
+        };
+      setAppliedStatus(newData);
+      setCurrentStatus(newData);
+      };
+    }
+    catch (error) {
+        console.error("Error fetching Farm 1 data:", error);
+    }
+    const fetchData = async () => {
+      const response = await axios.get("http://127.0.0.1:8000/YoloFarms");
+      const { temperature, humidity, sunlight } = response.data;
+      const newData = {
+          temperature: `${temperature}`,
+          humidity: `${humidity}`,
+          sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
+        };
+      setAppliedStatus(newData);
+      setCurrentStatus(newData);
+    };
+    fetchData();
+    intervalId = setInterval(fetchData, 100);
+    return () => {
+    if (intervalId) clearInterval(intervalId);
+  };
+}, [farmId]);
 
   // Chart data state
   const [chartData, setChartData] = useState({
@@ -217,7 +243,7 @@ const FarmDetails = () => {
           labels: [...prevData.temperature.labels, now].slice(-20),
           datasets: [{
             ...prevData.temperature.datasets[0],
-            data: [...prevData.temperature.datasets[0].data, appliedStatus.temperature ?? (Math.random() * 30 + 10)].slice(-20)
+            data: [...prevData.temperature.datasets[0].data, appliedStatus.temperature].slice(-20)
           }]
         },
         humidity: {
@@ -225,7 +251,7 @@ const FarmDetails = () => {
           labels: [...prevData.humidity.labels, now].slice(-20),
           datasets: [{
             ...prevData.humidity.datasets[0],
-            data: [...prevData.humidity.datasets[0].data, appliedStatus.humidity ?? (Math.random() * 50 + 30)].slice(-20)
+            data: [...prevData.humidity.datasets[0].data, appliedStatus.humidity].slice(-20)
           }]
         },
         sunlight: {
@@ -233,7 +259,7 @@ const FarmDetails = () => {
           labels: [...prevData.sunlight.labels, now].slice(-20),
           datasets: [{
             ...prevData.sunlight.datasets[0],
-            data: [...prevData.sunlight.datasets[0].data, appliedStatus.sunlight ?? (Math.random() * 1000 + 500)].slice(-20)
+            data: [...prevData.sunlight.datasets[0].data, appliedStatus.sunlight].slice(-20)
           }]
         }
       }));
@@ -257,17 +283,14 @@ const FarmDetails = () => {
   };
 
   const handleTemperatureChange = (value) => {
-    setTemperature(value);
     setCurrentStatus((prev) => ({ ...prev, temperature: value }));
     setAppliedStatus((prev) => ({ ...prev, temperature: value }));
   };
   const handleHumidityChange = (value) => {
-    setHumidity(value);
     setCurrentStatus((prev) => ({ ...prev, humidity: value }));
     setAppliedStatus((prev) => ({ ...prev, humidity: value }));
   };
   const handleSunlightChange = (value) => {
-    setSunlight(value);
     setCurrentStatus((prev) => ({ ...prev, sunlight: value }));
     setAppliedStatus((prev) => ({ ...prev, sunlight: value }));
   };
@@ -363,21 +386,21 @@ const FarmDetails = () => {
             }}>
               <div style={{ gridColumn: '1/2', gridRow: '1/2' }}>
                 <TemperatureWidget 
-                  temperature={temperature}
+                  temperature={currentStatus.temperature}
                   onTemperatureChange={handleTemperatureChange}
                   farmId={farmId}
                 />
               </div>
               <div style={{ gridColumn: '2/3', gridRow: '1/2' }}>
                 <HumidityWidget 
-                  humidity={humidity}
+                  humidity={currentStatus.humidity}
                   onHumidityChange={handleHumidityChange}
                   farmId={farmId}
                 />
               </div>
               <div style={{ gridColumn: '1/2', gridRow: '2/3' }}>
                 <LightWidget 
-                  sunlight={sunlight}
+                  sunlight={currentStatus.sunlight}
                   isLightOn={isLightOn}
                   onSunlightChange={handleSunlightChange}
                   onLightToggle={() => setIsLightOn(v => !v)}
