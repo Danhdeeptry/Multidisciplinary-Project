@@ -220,9 +220,16 @@ void initMqtt() {
 void reconnectWiFiTask(void *pvParameters) {
     Serial.println("[Task] reconnectWiFiTask started");
     for (;;) {
-        reconnectWiFi();
-        Serial.println("[Task] reconnectWiFiTask: WiFi checked");
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("[Task] reconnectWiFiTask: WiFi lost, reconnecting...");
+            reconnectWiFi();
+            if (WiFi.status() == WL_CONNECTED) {
+                Serial.println("[Task] reconnectWiFiTask: WiFi reconnected!");
+            } else {
+                Serial.println("[Task] reconnectWiFiTask: WiFi reconnect failed");
+            }
+        }
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
 
@@ -305,7 +312,6 @@ void sendTelemetryTask(void *pvParameters) {
                 unsigned long dayElapsed = (millis() - dayStartTime) / 1000;
                 float dayHours = (float)(dayElapsed / 3600.0f);
                 telemetryDoc["day_elapsed_hours"] = dayHours;
-                telemetryDoc["demo_mode"] = true;
 
                 String telemetryJson;
                 telemetryJson.reserve(400);
