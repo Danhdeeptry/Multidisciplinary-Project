@@ -11,7 +11,6 @@ import {
   TimeScale,
   Filler
 } from 'chart.js';
-import axios from "axios";
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -64,48 +63,24 @@ const FarmDetails = () => {
     if (local) return JSON.parse(local);
     return mockStatus[farmId?.toUpperCase()] || { temperature: 0, humidity: 0, sunlight: 0 };
   };
-  
 
-  const [appliedStatus, setAppliedStatus] = useState({ temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
-  const [currentStatus, setCurrentStatus] = useState({ temperature: "N/A", humidity: "N/A", sunlight: "N/A" });
+  const [appliedStatus, setAppliedStatus] = useState(getInitialStatus());
+  const [currentStatus, setCurrentStatus] = useState(getInitialStatus());
+  const [temperature, setTemperature] = useState(currentStatus.temperature);
+  const [humidity, setHumidity] = useState(currentStatus.humidity);
+  const [sunlight, setSunlight] = useState(currentStatus.sunlight);
   const leafStatus = mockLeafStatus[farmId?.toUpperCase()] || { health: 0, color: "#757575", status: "Unknown" };
   const [isLightOn, setIsLightOn] = useState(true);
+  const [isAutoMode, setIsAutoMode] = useState(false);
 
   useEffect(() => {
-    let intervalId;
-    try {
-      const fetchData = async () => {
-      const response = await axios.get("http://127.0.0.1:8000/YoloFarms");
-      const { temperature, humidity, sunlight } = response.data;
-      const newData = {
-          temperature: `${temperature}`,
-          humidity: `${humidity}`,
-          sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
-        };
-      setAppliedStatus(newData);
-      setCurrentStatus(newData);
-      };
-    }
-    catch (error) {
-        console.error("Error fetching Farm 1 data:", error);
-    }
-    const fetchData = async () => {
-      const response = await axios.get("http://127.0.0.1:8000/YoloFarms");
-      const { temperature, humidity, sunlight } = response.data;
-      const newData = {
-          temperature: `${temperature}`,
-          humidity: `${humidity}`,
-          sunlight: (typeof sunlight === 'number' || /^\d+$/.test(sunlight)) ? `${sunlight} lux` : (sunlight === undefined ? "N/A" : sunlight)
-        };
-      setAppliedStatus(newData);
-      setCurrentStatus(newData);
-    };
-    fetchData();
-    intervalId = setInterval(fetchData, 100);
-    return () => {
-    if (intervalId) clearInterval(intervalId);
-  };
-}, [farmId]);
+    const status = getInitialStatus();
+    setAppliedStatus(status);
+    setCurrentStatus(status);
+    setTemperature(status.temperature);
+    setHumidity(status.humidity);
+    setSunlight(status.sunlight);
+  }, [farmId]);
 
   // Chart data state
   const [chartData, setChartData] = useState({
@@ -242,7 +217,7 @@ const FarmDetails = () => {
           labels: [...prevData.temperature.labels, now].slice(-20),
           datasets: [{
             ...prevData.temperature.datasets[0],
-            data: [...prevData.temperature.datasets[0].data, appliedStatus.temperature].slice(-20)
+            data: [...prevData.temperature.datasets[0].data, appliedStatus.temperature ?? (Math.random() * 30 + 10)].slice(-20)
           }]
         },
         humidity: {
@@ -250,7 +225,7 @@ const FarmDetails = () => {
           labels: [...prevData.humidity.labels, now].slice(-20),
           datasets: [{
             ...prevData.humidity.datasets[0],
-            data: [...prevData.humidity.datasets[0].data, appliedStatus.humidity].slice(-20)
+            data: [...prevData.humidity.datasets[0].data, appliedStatus.humidity ?? (Math.random() * 50 + 30)].slice(-20)
           }]
         },
         sunlight: {
@@ -258,7 +233,7 @@ const FarmDetails = () => {
           labels: [...prevData.sunlight.labels, now].slice(-20),
           datasets: [{
             ...prevData.sunlight.datasets[0],
-            data: [...prevData.sunlight.datasets[0].data, appliedStatus.sunlight].slice(-20)
+            data: [...prevData.sunlight.datasets[0].data, appliedStatus.sunlight ?? (Math.random() * 1000 + 500)].slice(-20)
           }]
         }
       }));
@@ -282,14 +257,17 @@ const FarmDetails = () => {
   };
 
   const handleTemperatureChange = (value) => {
+    setTemperature(value);
     setCurrentStatus((prev) => ({ ...prev, temperature: value }));
     setAppliedStatus((prev) => ({ ...prev, temperature: value }));
   };
   const handleHumidityChange = (value) => {
+    setHumidity(value);
     setCurrentStatus((prev) => ({ ...prev, humidity: value }));
     setAppliedStatus((prev) => ({ ...prev, humidity: value }));
   };
   const handleSunlightChange = (value) => {
+    setSunlight(value);
     setCurrentStatus((prev) => ({ ...prev, sunlight: value }));
     setAppliedStatus((prev) => ({ ...prev, sunlight: value }));
   };
@@ -445,6 +423,50 @@ const FarmDetails = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Add API functions for light control
+  const setGrowLightState = async (isAuto) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/light/auto/${isAuto}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to set grow light state');
+      }
+    } catch (error) {
+      console.error('Error setting grow light state:', error);
+    }
+  };
+
+  const setAutoLightMode = async (isOn) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/light/manual/${isOn}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to set auto light mode');
+      }
+    } catch (error) {
+      console.error('Error setting auto light mode:', error);
+    }
+  };
+
+  // Add new handlers for light control
+  const handleAutoModeToggle = () => {
+    setIsAutoMode(!isAutoMode);
+    setGrowLightState(!isAutoMode);
+  };
+
+  const handleManualLightToggle = () => {
+    setIsLightOn(!isLightOn);
+    setAutoLightMode(!isLightOn);
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(120deg, #e0f7fa 0%, #f5f8f5 100%)', padding: 0 }}>
       {/* Header with return button */}
@@ -537,24 +559,27 @@ const FarmDetails = () => {
             }}>
               <div style={{ gridColumn: '1/2', gridRow: '1/2' }}>
                 <TemperatureWidget 
-                  temperature={currentStatus.temperature}
+                  temperature={temperature}
                   onTemperatureChange={handleTemperatureChange}
                   farmId={farmId}
                 />
               </div>
               <div style={{ gridColumn: '2/3', gridRow: '1/2' }}>
                 <HumidityWidget 
-                  humidity={currentStatus.humidity}
+                  humidity={humidity}
                   onHumidityChange={handleHumidityChange}
                   farmId={farmId}
                 />
               </div>
               <div style={{ gridColumn: '1/2', gridRow: '2/3' }}>
                 <LightWidget 
-                  sunlight={currentStatus.sunlight}
+                  sunlight={sunlight}
                   isLightOn={isLightOn}
+                  isAutoMode={isAutoMode}
                   onSunlightChange={handleSunlightChange}
                   onLightToggle={() => setIsLightOn(v => !v)}
+                  onAutoModeToggle={handleAutoModeToggle}
+                  onManualLightToggle={handleManualLightToggle}
                   farmId={farmId}
                 />
               </div>

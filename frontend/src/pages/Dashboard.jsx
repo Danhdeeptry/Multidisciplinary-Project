@@ -6,6 +6,7 @@ import farm1img from "../images/farm1.jpg";
 import farm2img from "../images/farm2.jpg";
 import farm3img from "../images/farm3.jpg";
 import { useNavigate } from "react-router-dom";
+import AlarmWidget from '../components/widgets/AlarmWidget';
 
 const farms = [
   {
@@ -216,12 +217,32 @@ const FarmCard = ({ label, image }) => {
 const Dashboard = () => {
   const { goToLogin } = useNavigation();
   const navigate = useNavigate();
+  const [alarms, setAlarms] = useState([]);
   
   // Function to navigate to the farm page
   const goToFarm = () => {
     window.location.href = "/farm";
   };
   
+  useEffect(() => {
+    // Giả lập fetch từ localStorage hoặc API
+    const data = [
+      {
+        alert_message: "Light intensity returned to normal",
+        alert_timestamp: 1748669271582,
+        alert_type: "NORMAL",
+        alert_value: 165.5
+      },
+      {
+        alert_message: "Light intensity too low",
+        alert_timestamp: 1748668000000,
+        alert_type: "LOW",
+        alert_value: 20.1
+      }
+    ];
+    setAlarms(data);
+  }, []);
+
   return (
     <div style={{ 
       display: "flex", 
@@ -362,10 +383,11 @@ const Dashboard = () => {
         </div>
         
         <h2 style={{ 
-          fontSize: "22px", 
+          fontSize: "20px", 
+          fontWeight: "800", 
           marginBottom: "20px", 
-          color: "#3e5e3e",
-          fontWeight: "600" 
+          color: "#2e7d32", 
+          letterSpacing: "1px" 
         }}>
           Your Farms
         </h2>
@@ -386,58 +408,69 @@ const Dashboard = () => {
           ))}
         </div>
         
-        {/* Recent Activity Section */}
-        <h2 style={{ 
-          fontSize: "22px", 
-          marginBottom: "20px", 
-          color: "#3e5e3e",
-          fontWeight: "600" 
+        {/* Recent Activity & Alarms side by side */}
+        <div style={{
+          display: "flex",
+          gap: "24px",
+          marginTop: "40px",
+          alignItems: "flex-start"
         }}>
-          Recent Activity
-        </h2>
-        
-        <div style={{ 
-          backgroundColor: "white", 
-          borderRadius: "8px", 
-          padding: "20px", 
-          boxShadow: "0 2px 6px rgba(0,0,0,0.1)" 
-        }}>
-          <div style={{ 
-            borderBottom: "1px solid #e0e0e0", 
-            paddingBottom: "12px", 
-            marginBottom: "12px" 
+          {/* Recent Activity */}
+          <div style={{
+            flex: 1,
+            backgroundColor: "white",
+            borderRadius: "8px",
+            padding: "20px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
           }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>
-                <p style={{ fontWeight: "500", color: "#333" }}>Irrigation system activated</p>
-                <p style={{ fontSize: "14px", color: "#666", marginTop: "4px" }}>FARM1</p>
+            <h2 style={{
+              fontSize: "20px",
+              fontWeight: "800",
+              marginBottom: "20px",
+              color: "#2e7d32",
+              letterSpacing: "1px"
+            }}>
+              Recent Activity
+            </h2>
+            <div style={{
+              borderBottom: "1px solid #e0e0e0",
+              paddingBottom: "12px",
+              marginBottom: "12px"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div>
+                  <p style={{ fontWeight: "500", color: "#333" }}>Irrigation system activated</p>
+                  <p style={{ fontSize: "14px", color: "#666", marginTop: "4px" }}>FARM1</p>
+                </div>
+                <span style={{ fontSize: "14px", color: "#666" }}>10 minutes ago</span>
               </div>
-              <span style={{ fontSize: "14px", color: "#666" }}>10 minutes ago</span>
+            </div>
+            <div style={{
+              borderBottom: "1px solid #e0e0e0",
+              paddingBottom: "12px",
+              marginBottom: "12px"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div>
+                  <p style={{ fontWeight: "500", color: "#333" }}>Temperature alert</p>
+                  <p style={{ fontSize: "14px", color: "#666", marginTop: "4px" }}>FARM2 - High temperature detected</p>
+                </div>
+                <span style={{ fontSize: "14px", color: "#666" }}>1 hour ago</span>
+              </div>
+            </div>
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div>
+                  <p style={{ fontWeight: "500", color: "#333" }}>Soil sensor maintenance</p>
+                  <p style={{ fontSize: "14px", color: "#666", marginTop: "4px" }}>FARM3 - Completed</p>
+                </div>
+                <span style={{ fontSize: "14px", color: "#666" }}>Yesterday</span>
+              </div>
             </div>
           </div>
-          
-          <div style={{ 
-            borderBottom: "1px solid #e0e0e0", 
-            paddingBottom: "12px", 
-            marginBottom: "12px" 
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>
-                <p style={{ fontWeight: "500", color: "#333" }}>Temperature alert</p>
-                <p style={{ fontSize: "14px", color: "#666", marginTop: "4px" }}>FARM2 - High temperature detected</p>
-              </div>
-              <span style={{ fontSize: "14px", color: "#666" }}>1 hour ago</span>
-            </div>
-          </div>
-          
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>
-                <p style={{ fontWeight: "500", color: "#333" }}>Soil sensor maintenance</p>
-                <p style={{ fontSize: "14px", color: "#666", marginTop: "4px" }}>FARM3 - Completed</p>
-              </div>
-              <span style={{ fontSize: "14px", color: "#666" }}>Yesterday</span>
-            </div>
+          {/* Alarms */}
+          <div style={{ flex: 1, minWidth: 400, maxWidth: 600 }}>
+            <AlarmWidget alarms={alarms} />
           </div>
         </div>
       </main>
