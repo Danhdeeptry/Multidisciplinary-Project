@@ -1,5 +1,4 @@
 {
-  "idf.portWin": "COM5",
   "idf.openOcdConfigs": [
     "board/esp32s3-bridge.cfg"
   ],
@@ -61,7 +60,7 @@
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
-  "cmake.sourceDirectory": "D:/HCMUT/Year_3/HK242/IOT/CoreIOT/Lab2/YoloUNO_PlatformIO/lib/ArduinoJson/src",
+  "cmake.sourceDirectory": "${workspaceFolder}/../lib/ArduinoJson/src",
   "files.associations": {
     "array": "cpp"
   },
