@@ -43,7 +43,7 @@ volatile bool ledState = false;
 volatile bool growLightState = false;
 volatile bool autoLightMode = true;
 volatile float lightThresholdLow = 200.0;   // lux - turn on grow light when below this
-volatile float lightThresholdHigh = 300.0;  // lux - turn off grow light when above this
+volatile float lightThresholdHigh = 400.0;  // lux - turn off grow light when above this
 volatile float dliTarget = 20.0;            // mol/m²/day - Daily Light Integral target
 volatile bool alertEnabled = true;
 
@@ -87,37 +87,6 @@ DHT20 dht20;
 // Biến lưu trữ trạng thái cảm biến
 bool sensorInitialized = false;
 bool lightSensorInitialized = false;
-
-// Thêm hàm DHT20JSON ở đây với tối ưu bộ nhớ - DEPRECATED: Sử dụng batch telemetry thay thế
-/*
-String DHT20JSON_temp(float temperature) {
-  StaticJsonDocument<128> doc;  // Sử dụng StaticJsonDocument thay vì Dynamic để tránh heap fragmentation
-  doc["id"] = "1";
-  doc["name"] =  "temperature";
-  doc["data"] = serialized(String(temperature, 2));  // Giới hạn 2 số thập phân
-  doc["unit"] = "C";
-
-  String output;
-  output.reserve(100);  // Pre-allocate string capacity
-  serializeJson(doc, output);
-  return output;
-}
-*/
-
-/*
-String DHT20JSON_humid(float humidity) {
-  StaticJsonDocument<128> doc;  // Sử dụng StaticJsonDocument thay vì Dynamic
-  doc["id"] = "2";
-  doc["name"] =  "humidity";
-  doc["data"] = serialized(String(humidity, 2));  // Giới hạn 2 số thập phân
-  doc["unit"] = "%";
-
-  String output;
-  output.reserve(100);  // Pre-allocate string capacity
-  serializeJson(doc, output);
-  return output;
-}
-*/
 
 // Hàm đọc cảm biến ánh sáng và chuyển đổi thành lux (ước lượng)
 float readLightSensor() {
@@ -171,14 +140,15 @@ void controlGrowLight(float lightIntensity) {
 }
 
 // Calculate Daily Light Integral (DLI) in mol/m²/day
+// DEMO MODE: Accelerated DLI calculation for faster observation (continuous, no reset)
 void updateDLI(float lightIntensity) {
   unsigned long currentTime = millis();
   
-  // Reset DLI at start of new day (every 24 hours)
+  // Keep normal 24-hour reset cycle but accelerate accumulation
   if (dayStartTime == 0 || (currentTime - dayStartTime) >= 86400000) { // 24 hours in ms
     dayStartTime = currentTime;
     totalDLI = 0.0;
-    Serial.println("New day started - DLI reset to 0");
+    Serial.println("New day started - DLI reset to 0 (normal 24-hour cycle)");
   }
   
   if (lastDLIUpdate != 0) {
@@ -188,10 +158,22 @@ void updateDLI(float lightIntensity) {
     // Calculate time difference in seconds
     float timeDiff = (currentTime - lastDLIUpdate) / 1000.0;
     
-    // Add to DLI: PPFD * time * conversion factor
+    // DEMO MODE: Apply moderate acceleration factor for easier observation
+    const float DEMO_ACCELERATION_FACTOR = 10.0; // 10x faster than normal (reasonable for demo)
+    float acceleratedTimeDiff = timeDiff * DEMO_ACCELERATION_FACTOR;
+    
+    // Add to DLI: PPFD * accelerated_time * conversion factor
     // 1 mol/m²/day = 1,000,000 µmol/m²/s * 86400 s = 86.4 billion µmol/m²/day
-    float dliIncrement = (ppfd * timeDiff) / 1000000.0; // Convert µmol to mol
+    float dliIncrement = (ppfd * acceleratedTimeDiff) / 1000000.0; // Convert µmol to mol
     totalDLI += dliIncrement;
+    
+    // Debug info for demo monitoring (less frequent)
+    static unsigned long lastDebugTime = 0;
+    if (currentTime - lastDebugTime > 60000) { // Debug every 60 seconds
+      lastDebugTime = currentTime;
+      Serial.printf("DLI Progress: %.3f mol/m²/day (%.1fx faster, %.1f%% of target)\n", 
+                    totalDLI, DEMO_ACCELERATION_FACTOR, (totalDLI/dliTarget)*100.0);
+    }
   }
   
   lastDLIUpdate = currentTime;
@@ -199,12 +181,16 @@ void updateDLI(float lightIntensity) {
 
 // Send alerts based on light conditions
 void checkLightAlerts(float lightIntensity) {
+  // Serial.printf("[ALERT DEBUG] lightIntensity=%.1f, low=%.1f, high=%.1f, lowLightAlertSent=%s, highLightAlertSent=%s\n",
+  //   lightIntensity, lightThresholdLow, lightThresholdHigh,
+  //   lowLightAlertSent ? "true" : "false", highLightAlertSent ? "true" : "false");
   if (!alertEnabled) {
+    // Serial.println("[ALERT DEBUG] Alert system is DISABLED");
     return;
   }
-  
   // Low light alert
   if (lightIntensity < lightThresholdLow && !lowLightAlertSent) {
+    // Serial.println("[ALERT DEBUG] Triggering LOW_LIGHT alert");
     Telemetry alertData[3] = {
       Telemetry("alert_type", "LOW_LIGHT"),
       Telemetry("alert_message", "Light intensity below threshold"),
@@ -215,9 +201,9 @@ void checkLightAlerts(float lightIntensity) {
     highLightAlertSent = false; // Reset opposite alert
     Serial.printf("LOW LIGHT ALERT: %.1f lux < %.1f lux threshold\n", lightIntensity, lightThresholdLow);
   }
-  
   // High light alert (excessive light can damage plants)
-  else if (lightIntensity > (lightThresholdHigh * 2) && !highLightAlertSent) {
+  else if (lightIntensity > lightThresholdHigh && !highLightAlertSent) {
+    // Serial.println("[ALERT DEBUG] Triggering HIGH_LIGHT alert");
     Telemetry alertData[3] = {
       Telemetry("alert_type", "HIGH_LIGHT"),
       Telemetry("alert_message", "Light intensity excessively high"),
@@ -226,12 +212,12 @@ void checkLightAlerts(float lightIntensity) {
     tb.sendTelemetry(alertData, 3);
     highLightAlertSent = true;
     lowLightAlertSent = false; // Reset opposite alert
-    Serial.printf("HIGH LIGHT ALERT: %.1f lux > %.1f lux threshold\n", lightIntensity, lightThresholdHigh * 2);
+    Serial.printf("HIGH LIGHT ALERT: %.1f lux > %.1f lux threshold\n", lightIntensity, lightThresholdHigh);
   }
-  
   // Reset alerts when light returns to normal range
   else if (lightIntensity >= lightThresholdLow && lightIntensity <= lightThresholdHigh * 2) {
     if (lowLightAlertSent || highLightAlertSent) {
+      // Serial.println("[ALERT DEBUG] Clearing alerts (NORMAL)");
       lowLightAlertSent = false;
       highLightAlertSent = false;
       Telemetry alertData[2] = {
@@ -240,24 +226,13 @@ void checkLightAlerts(float lightIntensity) {
       };
       tb.sendTelemetry(alertData, 2);
       Serial.println("Light alerts cleared - intensity normal");
+    } else {
+      // Serial.println("[ALERT DEBUG] No alert to clear (NORMAL range)");
     }
+  } else {
+    // Serial.println("[ALERT DEBUG] No alert condition met");
   }
 }
-
-/*
-String LightSensorJSON(float lightIntensity) {
-  StaticJsonDocument<128> doc;
-  doc["id"] = "3";
-  doc["name"] = "light_intensity";
-  doc["data"] = serialized(String(lightIntensity, 1));  // 1 số thập phân
-  doc["unit"] = "lux";
-
-  String output;
-  output.reserve(100);
-  serializeJson(doc, output);
-  return output;
-}
-*/
 
 // ---------------- RPC Callback ----------------
 RPC_Response setLedSwitchState(const RPC_Data &data) {
@@ -493,21 +468,21 @@ void setup() {
   pinMode(GROW_LIGHT_PIN, OUTPUT);
   digitalWrite(GROW_LIGHT_PIN, growLightState); // Initial state
   Serial.printf("Grow light pin %d initialized - State: %s\n", GROW_LIGHT_PIN, growLightState ? "ON" : "OFF");
-  
-  // Initialize DLI tracking
+    // Initialize DLI tracking
   dayStartTime = millis();
   lastDLIUpdate = millis();
   totalDLI = 0.0;
-  Serial.println("Daily Light Integral tracking initialized");
+  Serial.println("Daily Light Integral tracking initialized (DEMO MODE - 10x accelerated)");
   
   // Khởi tạo WiFi
   InitWiFi();
-  Serial.println("Smart Farm IoT system activated with comprehensive features:");
+  Serial.println("🌱 Smart Farm system activated with comprehensive features:");
   Serial.println("- Real-time sensor monitoring (Temperature, Humidity, Light)");
   Serial.println("- Automatic grow light control with thresholds");
-  Serial.println("- Daily Light Integral (DLI) calculation");
+  Serial.println("- Daily Light Integral (DLI) calculation [DEMO: 10x faster than normal]");
   Serial.println("- Alert system for abnormal conditions");
   Serial.println("- Remote control via ThingsBoard RPC");
+  Serial.println("- DEMO MODE: Accelerated DLI accumulation for easier observation");
   Serial.println("Using DHT20 sensor for temperature and humidity");
   // Tạo các task với stack size tăng lên để tránh stack overflow
   
@@ -661,19 +636,22 @@ void taskSendTelemetry(void *pvParameters) {
         if (lightSensorInitialized) {
           telemetryDoc["light_intensity"] = lightIntensity;
         }
-        
-        // Add Smart Farm telemetry data
+          // Add Smart Farm telemetry data
         telemetryDoc["grow_light_active"] = growLightState;
         telemetryDoc["auto_mode_active"] = autoLightMode;
         telemetryDoc["daily_light_integral"] = totalDLI;
-        
-        // Calculate DLI progress percentage
+        telemetryDoc["lightThresholdLow"] = lightThresholdLow;
+        telemetryDoc["lightThresholdHigh"] = lightThresholdHigh;
+        // Remove any snake_case threshold fields if present (do not add them)
+          // Calculate DLI progress percentage
         float dliProgress = (totalDLI / dliTarget) * 100.0;
         telemetryDoc["dli_progress_percent"] = dliProgress;
         
-        // Send time-based data
+        // Normal day cycle (24 hours) with accelerated DLI accumulation
         unsigned long dayElapsed = (millis() - dayStartTime) / 1000; // seconds
-        telemetryDoc["day_elapsed_hours"] = (float)(dayElapsed / 3600.0);
+        float dayHours = (float)(dayElapsed / 3600.0); // 3600 seconds = 1 hour
+        telemetryDoc["day_elapsed_hours"] = dayHours;
+        telemetryDoc["demo_mode"] = true;  // Indicate this is demo mode with 10x DLI acceleration
         
         // Convert to JSON string
         String telemetryJson;
@@ -692,24 +670,21 @@ void taskSendTelemetry(void *pvParameters) {
         Serial.printf("DEBUG: hasValidDHT20Data=%s, lightSensorInitialized=%s\n", 
                       hasValidDHT20Data ? "true" : "false", 
                       lightSensorInitialized ? "true" : "false");
-        
-        if (hasValidDHT20Data && lightSensorInitialized) {
+          if (hasValidDHT20Data && lightSensorInitialized) {
           Serial.printf("Sent telemetry - Temperature: %.2f C, Humidity: %.2f %%, Light: %.1f lux\n", 
                         temperature, humidity, lightIntensity);
-          Serial.printf("Smart Farm - Grow Light: %s, Auto Mode: %s, DLI: %.3f/%.1f (%.1f%%)\n",
+          Serial.printf("Smart Farm DEMO - Grow Light: %s, Auto Mode: %s, DLI: %.3f/%.1f (%.1f%%)\n",
                         growLightState ? "ON" : "OFF", 
                         autoLightMode ? "AUTO" : "MANUAL",
-                        totalDLI, dliTarget, dliProgress);
-        } else if (hasValidDHT20Data) {
+                        totalDLI, dliTarget, dliProgress);        } else if (hasValidDHT20Data) {
           Serial.printf("Sent telemetry - Temperature: %.2f C, Humidity: %.2f %%\n", 
                         temperature, humidity);
-          Serial.printf("Smart Farm (DHT20 only) - Grow Light: %s, Auto Mode: %s, DLI: %.3f/%.1f\n",
+          Serial.printf("Smart Farm DEMO (DHT20 only) - Grow Light: %s, Auto Mode: %s, DLI: %.3f/%.1f [10x faster]\n",
                         growLightState ? "ON" : "OFF", 
                         autoLightMode ? "AUTO" : "MANUAL",
-                        totalDLI, dliTarget);
-        } else if (lightSensorInitialized) {
+                        totalDLI, dliTarget);        } else if (lightSensorInitialized) {
           Serial.printf("Sent telemetry - Light: %.1f lux\n", lightIntensity);
-          Serial.printf("Smart Farm (Light only) - Grow Light: %s, Auto Mode: %s\n",
+          Serial.printf("Smart Farm DEMO (Light only) - Grow Light: %s, Auto Mode: %s [10x faster]\n",
                         growLightState ? "ON" : "OFF", 
                         autoLightMode ? "AUTO" : "MANUAL");
         }
