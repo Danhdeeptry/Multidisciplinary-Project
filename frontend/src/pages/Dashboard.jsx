@@ -383,11 +383,11 @@ const Dashboard = () => {
         </div>
         
         <h2 style={{ 
-          fontSize: "22px", 
+          fontSize: "20px", 
+          fontWeight: "800", 
           marginBottom: "20px", 
-          color: "#2e7d32",
-          fontWeight: 800,
-          letterSpacing: 1
+          color: "#2e7d32", 
+          letterSpacing: "1px" 
         }}>
           Your Farms
         </h2>
@@ -425,10 +425,10 @@ const Dashboard = () => {
           }}>
             <h2 style={{
               fontSize: "20px",
+              fontWeight: "800",
               marginBottom: "20px",
               color: "#2e7d32",
-              fontWeight: 800,
-              letterSpacing: 1
+              letterSpacing: "1px"
             }}>
               Recent Activity
             </h2>
