@@ -6,3 +6,5 @@
 .vscode/launch.json
 .vscode/ipch
 .vscode/settings.local.json
+.env
+config.h

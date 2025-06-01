@@ -83,7 +83,7 @@ void updateDLI(float lightIntensity) {
         float timeDiff = (currentTime - lastDLIUpdate) / 1000.0f;
         
         // DEMO MODE: Apply moderate acceleration factor for easier observation
-        const float DEMO_ACCELERATION_FACTOR = 50.0f;  // 50x faster than normal (reasonable for demo)
+        const float DEMO_ACCELERATION_FACTOR = 150.0f;  // 150x faster than normal (reasonable for demo)
         float acceleratedTimeDiff = timeDiff * DEMO_ACCELERATION_FACTOR;
         
         // Add to DLI: PPFD * accelerated_time * conversion factor
