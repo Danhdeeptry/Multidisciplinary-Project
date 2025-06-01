@@ -53,12 +53,74 @@ RPC_Response setAutoLightMode(const RPC_Data &data) {
     return RPC_Response("setAutoLightMode", autoLightMode);
 }
 
+RPC_Response setTempThresholds(const RPC_Data &data) {
+    extern volatile float tempThresholdMin;
+    extern volatile float tempThresholdMax;
+    
+    JsonObjectConst obj = data;
+    if (obj.containsKey("min")) {
+        float newMin = obj["min"].as<float>();
+        if (newMin >= -10.0 && newMin <= 50.0) {
+            tempThresholdMin = newMin;
+            Serial.printf("Temperature min threshold set to: %.1f°C\n", tempThresholdMin);
+        }
+    }
+    if (obj.containsKey("max")) {
+        float newMax = obj["max"].as<float>();
+        if (newMax >= -10.0 && newMax <= 50.0) {
+            tempThresholdMax = newMax;
+            Serial.printf("Temperature max threshold set to: %.1f°C\n", tempThresholdMax);
+        }
+    }
+    attributesChanged = true;
+    
+    StaticJsonDocument<100> response;
+    response["tempThresholdMin"] = tempThresholdMin;
+    response["tempThresholdMax"] = tempThresholdMax;
+    String responseStr;
+    serializeJson(response, responseStr);
+    
+    return RPC_Response("setTempThresholds", responseStr.c_str());
+}
+
+RPC_Response setHumidityThresholds(const RPC_Data &data) {
+    extern volatile float humidityThresholdMin;
+    extern volatile float humidityThresholdMax;
+    
+    JsonObjectConst obj = data;
+    if (obj.containsKey("min")) {
+        float newMin = obj["min"].as<float>();
+        if (newMin >= 0.0 && newMin <= 100.0) {
+            humidityThresholdMin = newMin;
+            Serial.printf("Humidity min threshold set to: %.1f%%\n", humidityThresholdMin);
+        }
+    }
+    if (obj.containsKey("max")) {
+        float newMax = obj["max"].as<float>();
+        if (newMax >= 0.0 && newMax <= 100.0) {
+            humidityThresholdMax = newMax;
+            Serial.printf("Humidity max threshold set to: %.1f%%\n", humidityThresholdMax);
+        }
+    }
+    attributesChanged = true;
+    
+    StaticJsonDocument<100> response;
+    response["humidityThresholdMin"] = humidityThresholdMin;
+    response["humidityThresholdMax"] = humidityThresholdMax;
+    String responseStr;
+    serializeJson(response, responseStr);
+    
+    return RPC_Response("setHumidityThresholds", responseStr.c_str());
+}
+
 // Callback arrays
-std::array<RPC_Callback, 4> callbacks = {
+std::array<RPC_Callback, 6> callbacks = {
     RPC_Callback{"setLedSwitchValue", setLedSwitchState},
     RPC_Callback{"readSensorData", readSensorData},
     RPC_Callback{"setGrowLightState", setGrowLightState},
-    RPC_Callback{"setAutoLightMode", setAutoLightMode}
+    RPC_Callback{"setAutoLightMode", setAutoLightMode},
+    RPC_Callback{"setTempThresholds", setTempThresholds},
+    RPC_Callback{"setHumidityThresholds", setHumidityThresholds}
 };
 
 void processSharedAttributes(const Shared_Attribute_Data &data) {
@@ -83,12 +145,28 @@ void processSharedAttributes(const Shared_Attribute_Data &data) {
             if (newTarget >= 1.0 && newTarget <= 100.0) dliTarget = newTarget;
         } else if (strcmp(it->key().c_str(), ALERT_ENABLED_ATTR) == 0) {
             alertEnabled = it->value().as<bool>();
+        } else if (strcmp(it->key().c_str(), TEMP_THRESHOLD_MIN_ATTR) == 0) {
+            extern volatile float tempThresholdMin;
+            float newThreshold = it->value().as<float>();
+            if (newThreshold >= -10.0 && newThreshold <= 50.0) tempThresholdMin = newThreshold;
+        } else if (strcmp(it->key().c_str(), TEMP_THRESHOLD_MAX_ATTR) == 0) {
+            extern volatile float tempThresholdMax;
+            float newThreshold = it->value().as<float>();
+            if (newThreshold >= -10.0 && newThreshold <= 50.0) tempThresholdMax = newThreshold;
+        } else if (strcmp(it->key().c_str(), HUMIDITY_THRESHOLD_MIN_ATTR) == 0) {
+            extern volatile float humidityThresholdMin;
+            float newThreshold = it->value().as<float>();
+            if (newThreshold >= 0.0 && newThreshold <= 100.0) humidityThresholdMin = newThreshold;
+        } else if (strcmp(it->key().c_str(), HUMIDITY_THRESHOLD_MAX_ATTR) == 0) {
+            extern volatile float humidityThresholdMax;
+            float newThreshold = it->value().as<float>();
+            if (newThreshold >= 0.0 && newThreshold <= 100.0) humidityThresholdMax = newThreshold;
         }
     }
     attributesChanged = true;
 }
 
-std::array<const char *, 8> SHARED_ATTRIBUTES_LIST = {
+std::array<const char *, 12> SHARED_ATTRIBUTES_LIST = {
     LED_STATE_ATTR,
     BLINKING_INTERVAL_ATTR,
     GROW_LIGHT_STATE_ATTR,
@@ -96,7 +174,11 @@ std::array<const char *, 8> SHARED_ATTRIBUTES_LIST = {
     LIGHT_THRESHOLD_HIGH_ATTR,
     AUTO_LIGHT_MODE_ATTR,
     DLI_TARGET_ATTR,
-    ALERT_ENABLED_ATTR
+    ALERT_ENABLED_ATTR,
+    TEMP_THRESHOLD_MIN_ATTR,
+    TEMP_THRESHOLD_MAX_ATTR,
+    HUMIDITY_THRESHOLD_MIN_ATTR,
+    HUMIDITY_THRESHOLD_MAX_ATTR
 };
 
 Shared_Attribute_Callback attributes_callback(
@@ -167,6 +249,15 @@ void sendAttributesTask(void *pvParameters) {
             tb.sendAttributeData(LIGHT_THRESHOLD_HIGH_ATTR, lightThresholdHigh);
             tb.sendAttributeData(DLI_TARGET_ATTR, dliTarget);
             tb.sendAttributeData(ALERT_ENABLED_ATTR, alertEnabled);
+            
+            // Send temperature and humidity threshold attributes
+            extern volatile float tempThresholdMin, tempThresholdMax;
+            extern volatile float humidityThresholdMin, humidityThresholdMax;
+            tb.sendAttributeData(TEMP_THRESHOLD_MIN_ATTR, tempThresholdMin);
+            tb.sendAttributeData(TEMP_THRESHOLD_MAX_ATTR, tempThresholdMax);
+            tb.sendAttributeData(HUMIDITY_THRESHOLD_MIN_ATTR, humidityThresholdMin);
+            tb.sendAttributeData(HUMIDITY_THRESHOLD_MAX_ATTR, humidityThresholdMax);
+            
             Serial.println("[Task] sendAttributesTask: Attributes sent to ThingsBoard");
         }
         vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -190,6 +281,7 @@ void sendTelemetryTask(void *pvParameters) {
                 controlGrowLight(lightIntensity);
                 updateDLI(lightIntensity);
                 checkLightAlerts(lightIntensity);
+                checkTempHumidityAlerts(temperature, humidity);
 
                 StaticJsonDocument<512> telemetryDoc;
                 telemetryDoc["temperature"] = temperature;
@@ -200,6 +292,15 @@ void sendTelemetryTask(void *pvParameters) {
                 telemetryDoc["daily_light_integral"] = getTotalDLI();
                 telemetryDoc["lightThresholdLow"] = lightThresholdLow;
                 telemetryDoc["lightThresholdHigh"] = lightThresholdHigh;
+                
+                // Add temperature and humidity thresholds to telemetry
+                extern volatile float tempThresholdMin, tempThresholdMax;
+                extern volatile float humidityThresholdMin, humidityThresholdMax;
+                telemetryDoc["tempThresholdMin"] = tempThresholdMin;
+                telemetryDoc["tempThresholdMax"] = tempThresholdMax;
+                telemetryDoc["humidityThresholdMin"] = humidityThresholdMin;
+                telemetryDoc["humidityThresholdMax"] = humidityThresholdMax;
+                
                 telemetryDoc["dli_progress_percent"] = getDLIProgressPercent();
                 unsigned long dayElapsed = (millis() - dayStartTime) / 1000;
                 float dayHours = (float)(dayElapsed / 3600.0f);

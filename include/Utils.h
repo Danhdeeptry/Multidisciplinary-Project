@@ -31,5 +31,11 @@ constexpr char AUTO_LIGHT_MODE_ATTR[] = "autoLightMode";
 constexpr char DLI_TARGET_ATTR[] = "dliTarget";
 constexpr char ALERT_ENABLED_ATTR[] = "alertEnabled";
 
+// Temperature and humidity alarm thresholds
+constexpr char TEMP_THRESHOLD_MIN_ATTR[] = "tempThresholdMin";
+constexpr char TEMP_THRESHOLD_MAX_ATTR[] = "tempThresholdMax";
+constexpr char HUMIDITY_THRESHOLD_MIN_ATTR[] = "humidityThresholdMin";
+constexpr char HUMIDITY_THRESHOLD_MAX_ATTR[] = "humidityThresholdMax";
+
 // Helper function (nếu cần)
 inline float convertLuxToPPFD(float lux) { return lux * 0.0185f; }

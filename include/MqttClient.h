@@ -20,9 +20,11 @@ RPC_Response setLedSwitchState(const RPC_Data &data);
 RPC_Response readSensorData(const RPC_Data &data);
 RPC_Response setGrowLightState(const RPC_Data &data);
 RPC_Response setAutoLightMode(const RPC_Data &data);
+RPC_Response setTempThresholds(const RPC_Data &data);
+RPC_Response setHumidityThresholds(const RPC_Data &data);
 
 // Callback arrays
-extern std::array<RPC_Callback, 4> callbacks;
+extern std::array<RPC_Callback, 6> callbacks;
 extern Shared_Attribute_Callback attributes_callback;
 extern Attribute_Request_Callback attribute_shared_request_callback;
 

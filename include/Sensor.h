@@ -18,3 +18,12 @@ float readLightSensor();
 
 // Cập nhật giá trị nhiệt độ và độ ẩm từ DHT20, trả về true nếu thành công
 bool updateDHT20();
+
+// Temperature and humidity alarm configuration and state
+extern volatile float tempThresholdMin;
+extern volatile float tempThresholdMax;
+extern volatile float humidityThresholdMin;
+extern volatile float humidityThresholdMax;
+
+// Check and send temperature/humidity alerts
+void checkTempHumidityAlerts(float temperature, float humidity);
