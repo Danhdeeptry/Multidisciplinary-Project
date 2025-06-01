@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaLightbulb, FaRegLightbulb, FaCog } from 'react-icons/fa';
 import AdjustModal from './AdjustModal';
 
-const LightWidget = ({ sunlight, isLightOn, onSunlightChange, onLightToggle, farmId }) => {
+const LightWidget = ({ sunlight, isLightOn, isAutoMode, onSunlightChange, onAutoModeToggle, onManualLightToggle, farmId }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [lightValue, setLightValue] = useState(sunlight);
 
@@ -69,29 +69,53 @@ const LightWidget = ({ sunlight, isLightOn, onSunlightChange, onLightToggle, far
         <div style={{ color: '#fff', fontSize: 38, fontWeight: 800, lineHeight: 1 }}>{sunlight}<span style={{ fontSize: 22, fontWeight: 400 }}> lux</span></div>
         <div style={{ color: '#fff', fontWeight: 500, fontSize: 15, opacity: 0.85, marginTop: 6 }}>{isLightOn ? 'MANUAL' : 'OFF'}</div>
         <div style={{ color: '#fff', fontWeight: 400, fontSize: 13, opacity: 0.8 }}>{isLightOn ? 'Warnings & fail-safe\nactions on' : 'Light is off'}</div>
-        <button
-          type="button"
-          onClick={onLightToggle}
-          style={{
-            marginTop: 10,
-            background: isLightOn ? 'linear-gradient(90deg, #ffe259 0%, #ffa751 100%)' : '#e0e0e0',
-            color: isLightOn ? '#ffb300' : '#888',
-            border: 'none',
-            borderRadius: 24,
-            padding: '6px 18px',
-            fontWeight: 700,
-            fontSize: 15,
-            boxShadow: isLightOn ? '0 2px 8px rgba(255,193,7,0.15)' : 'none',
-            cursor: 'pointer',
-            transition: 'all 0.3s',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8
-          }}
-        >
-          {isLightOn ? <FaLightbulb size={18} style={{ filter: 'drop-shadow(0 0 6px #ffe259)' }} /> : <FaRegLightbulb size={18} />}
-          {isLightOn ? 'Light ON' : 'Light OFF'}
-        </button>
+        {/* Remove the top Light ON/OFF button. Only show two buttons at the bottom. */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+          <button
+            onClick={onAutoModeToggle}
+            style={{
+              flex: 1,
+              background: isAutoMode ? '#2e7d32' : '#e0e0e0',
+              color: isAutoMode ? 'white' : '#666',
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 0',
+              fontWeight: 600,
+              fontSize: 15,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8
+            }}
+          >
+            {isAutoMode ? '🔄 Auto Mode' : '🔄 Manual Mode'}
+          </button>
+          <button
+            onClick={onManualLightToggle}
+            disabled={isAutoMode}
+            style={{
+              flex: 1,
+              background: isLightOn ? '#ffb300' : '#e0e0e0',
+              color: isLightOn ? '#fff' : '#666',
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 0',
+              fontWeight: 600,
+              fontSize: 15,
+              cursor: isAutoMode ? 'not-allowed' : 'pointer',
+              opacity: isAutoMode ? 0.6 : 1,
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8
+            }}
+          >
+            {isLightOn ? '💡 Light ON' : '💡 Light OFF'}
+          </button>
+        </div>
       </div>
       <AdjustModal
         open={modalOpen}
