@@ -89,7 +89,7 @@ def pull_telemetry():
         print(f"Error pulling telemetry: {e}")
 
 if __name__ == "__main__":
-    print("Starting telemetry pull every 3 seconds...")
+    print("Starting telemetry pull every 1 seconds...")
     while True:
         pull_telemetry()
-        time.sleep(5)
+        time.sleep(0.1)

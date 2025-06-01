@@ -73,7 +73,7 @@ class SimulatedDevice:
         except Exception as e:
             print(f"Error sending attributes: {e}")
     
-    def run_simulation(self, interval_seconds=5, total_time_minutes=10):
+    def run_simulation(self, interval_seconds=1, total_time_minutes=10):
         print(f"Starting device simulation. Will run for {total_time_minutes} minutes...")
         start_time = time.time()
         end_time = start_time + (total_time_minutes * 60)
@@ -89,4 +89,4 @@ if __name__ == "__main__":
     device = SimulatedDevice()
     
     # Thực hiện mô phỏng gửi dữ liệu trong 10 phút, cứ mỗi 2 giây
-    device.run_simulation(interval_seconds=2, total_time_minutes=10)
+    device.run_simulation(interval_seconds=1, total_time_minutes=10)

@@ -39,7 +39,7 @@ def cycle_data_index():
 
             # Increment index for cycling
             # current_index["index"] = (current_index["index"] + 1) % len(latest_data)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
 
     loop.run_until_complete(toggle())
 

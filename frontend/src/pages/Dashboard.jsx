@@ -98,7 +98,7 @@ const FarmCard = ({ label, image }) => {
 
   // Set interval only for FARM1
   if (label === "FARM1") {
-    intervalId = setInterval(fetchData, 5000); // Every 5 seconds
+    intervalId = setInterval(fetchData, 100); // Every 5 seconds
   }
 
   // Cleanup on unmount
