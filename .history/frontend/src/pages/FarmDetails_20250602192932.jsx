@@ -41,6 +41,12 @@ const mockStatus = {
   FARM3: { temperature: 29, humidity: 58, sunlight: 95 },
 };
 
+const mockLeafStatus = {
+  FARM1: { health: 95, color: "#4CAF50", status: "Excellent" },
+  FARM2: { health: 75, color: "#FFC107", status: "Good" },
+  FARM3: { health: 45, color: "#FF5722", status: "Needs Attention" },
+};
+
 const getGradient = (ctx, colorTop, colorBottom) => {
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
   gradient.addColorStop(0, colorTop);
@@ -58,6 +64,24 @@ const FarmDetails = () => {
     if (local) return JSON.parse(local);
     return mockStatus[farmId?.toUpperCase()] || { temperature: 0, humidity: 0, sunlight: 0 };
   };
+
+  const [appliedStatus, setAppliedStatus] = useState(getInitialStatus());
+  const [currentStatus, setCurrentStatus] = useState(getInitialStatus());
+  const [temperature, setTemperature] = useState(currentStatus.temperature);
+  const [humidity, setHumidity] = useState(currentStatus.humidity);
+  const [sunlight, setSunlight] = useState(currentStatus.sunlight);
+  const leafStatus = mockLeafStatus[farmId?.toUpperCase()] || { health: 0, color: "#757575", status: "Unknown" };
+  const [isLightOn, setIsLightOn] = useState(true);
+  const [isAutoMode, setIsAutoMode] = useState(false);
+
+  useEffect(() => {
+    const status = getInitialStatus();
+    setAppliedStatus(status);
+    setCurrentStatus(status);
+    setTemperature(status.temperature);
+    setHumidity(status.humidity);
+    setSunlight(status.sunlight);
+  }, [farmId]);
 
   // Chart data state
   const [chartData, setChartData] = useState({
@@ -194,7 +218,7 @@ const FarmDetails = () => {
           labels: [...prevData.temperature.labels, now].slice(-20),
           datasets: [{
             ...prevData.temperature.datasets[0],
-            data: [...prevData.temperature.datasets[0].data, getInitialStatus().temperature ?? (Math.random() * 30 + 10)].slice(-20)
+            data: [...prevData.temperature.datasets[0].data, appliedStatus.temperature ?? (Math.random() * 30 + 10)].slice(-20)
           }]
         },
         humidity: {
@@ -202,7 +226,7 @@ const FarmDetails = () => {
           labels: [...prevData.humidity.labels, now].slice(-20),
           datasets: [{
             ...prevData.humidity.datasets[0],
-            data: [...prevData.humidity.datasets[0].data, getInitialStatus().humidity ?? (Math.random() * 50 + 30)].slice(-20)
+            data: [...prevData.humidity.datasets[0].data, appliedStatus.humidity ?? (Math.random() * 50 + 30)].slice(-20)
           }]
         },
         sunlight: {
@@ -210,13 +234,13 @@ const FarmDetails = () => {
           labels: [...prevData.sunlight.labels, now].slice(-20),
           datasets: [{
             ...prevData.sunlight.datasets[0],
-            data: [...prevData.sunlight.datasets[0].data, getInitialStatus().sunlight ?? (Math.random() * 1000 + 500)].slice(-20)
+            data: [...prevData.sunlight.datasets[0].data, appliedStatus.sunlight ?? (Math.random() * 1000 + 500)].slice(-20)
           }]
         }
       }));
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [appliedStatus]);
 
   const getChartDataWithGradient = (data, ref, colorTop, colorBottom) => {
     if (ref.current && ref.current.ctx) {
@@ -231,6 +255,22 @@ const FarmDetails = () => {
       };
     }
     return data;
+  };
+
+  const handleTemperatureChange = (value) => {
+    setTemperature(value);
+    setCurrentStatus((prev) => ({ ...prev, temperature: value }));
+    setAppliedStatus((prev) => ({ ...prev, temperature: value }));
+  };
+  const handleHumidityChange = (value) => {
+    setHumidity(value);
+    setCurrentStatus((prev) => ({ ...prev, humidity: value }));
+    setAppliedStatus((prev) => ({ ...prev, humidity: value }));
+  };
+  const handleSunlightChange = (value) => {
+    setSunlight(value);
+    setCurrentStatus((prev) => ({ ...prev, sunlight: value }));
+    setAppliedStatus((prev) => ({ ...prev, sunlight: value }));
   };
 
   // Xóa sunlight chart và thêm chart mới
@@ -384,6 +424,50 @@ const FarmDetails = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Add API functions for light control
+  const setGrowLightState = async (isAuto) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/light/auto/${isAuto}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to set grow light state');
+      }
+    } catch (error) {
+      console.error('Error setting grow light state:', error);
+    }
+  };
+
+  const setAutoLightMode = async (isOn) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/light/manual/${isOn}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to set auto light mode');
+      }
+    } catch (error) {
+      console.error('Error setting auto light mode:', error);
+    }
+  };
+
+  // Add new handlers for light control
+  const handleAutoModeToggle = () => {
+    setIsAutoMode(!isAutoMode);
+    setGrowLightState(!isAutoMode);
+  };
+
+  const handleManualLightToggle = () => {
+    setIsLightOn(!isLightOn);
+    setAutoLightMode(!isLightOn);
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(120deg, #e0f7fa 0%, #f5f8f5 100%)', padding: 0 }}>
       {/* Header with return button */}
@@ -472,115 +556,40 @@ const FarmDetails = () => {
               gridTemplateRows: '1fr 1fr',
               gap: 24,
               marginBottom: 32,
-              minHeight: 320,
-              alignItems: 'stretch'
+              minHeight: 320
             }}>
               <div style={{ gridColumn: '1/2', gridRow: '1/2' }}>
-                <div style={{
-                  background: 'linear-gradient(90deg, #ffb347 0%, #ffcc33 100%)',
-                  borderRadius: 18,
-                  boxShadow: '0 4px 24px rgba(255,183,71,0.10)',
-                  padding: 32,
-                  color: 'white',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 200
-                }}>
-                  <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 12 }}>
-                    Temperature 🌡️
-                  </h2>
-                  <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 8 }}>
-                    32°C
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
-                    SCHEDULED
-                  </div>
-                  <div style={{ fontSize: 14, marginTop: 8 }}>
-                    Sunscreens between 11:00 - 16:00
-                  </div>
-                </div>
+                <TemperatureWidget 
+                  temperature={temperature}
+                  onTemperatureChange={handleTemperatureChange}
+                  farmId={farmId}
+                />
               </div>
               <div style={{ gridColumn: '2/3', gridRow: '1/2' }}>
-                <div style={{
-                  background: 'linear-gradient(90deg, #36d1c4 0%, #5b86e5 100%)',
-                  borderRadius: 18,
-                  boxShadow: '0 4px 24px rgba(53,162,235,0.10)',
-                  padding: 32,
-                  color: 'white',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 200
-                }}>
-                  <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 12 }}>
-                    Humidity 💧
-                  </h2>
-                  <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 8 }}>
-                    63%
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
-                    AUTOMATIC
-                  </div>
-                  <div style={{ fontSize: 14, marginTop: 8 }}>
-                    Keeping around 10%
-                  </div>
-                </div>
+                <HumidityWidget 
+                  humidity={humidity}
+                  onHumidityChange={handleHumidityChange}
+                  farmId={farmId}
+                />
               </div>
               <div style={{ gridColumn: '1/2', gridRow: '2/3' }}>
-                <div style={{
-                  background: 'linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)',
-                  borderRadius: 18,
-                  boxShadow: '0 4px 24px rgba(67,233,123,0.10)',
-                  padding: 32,
-                  color: 'white',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 200
-                }}>
-                  <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 12 }}>
-                    Light ☀️
-                  </h2>
-                  <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 8 }}>
-                    780 lux
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
-                    MANUAL
-                  </div>
-                  <div style={{ fontSize: 14, marginTop: 8 }}>
-                    Warnings & fail-safe actions on
-                  </div>
-                  <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
-                    <button style={{ background: '#e0e0e0', color: '#333', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 600, cursor: 'pointer' }}>Manual Mode</button>
-                    <button style={{ background: '#ffb347', color: 'white', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 600, cursor: 'pointer' }}>Light ON</button>
-                  </div>
-                </div>
+                <LightWidget 
+                  sunlight={sunlight}
+                  isLightOn={isLightOn}
+                  isAutoMode={isAutoMode}
+                  onSunlightChange={handleSunlightChange}
+                  onLightToggle={() => setIsLightOn(v => !v)}
+                  onAutoModeToggle={handleAutoModeToggle}
+                  onManualLightToggle={handleManualLightToggle}
+                  farmId={farmId}
+                />
               </div>
               <div style={{ gridColumn: '2/3', gridRow: '2/3' }}>
-                <div style={{
-                  background: 'linear-gradient(90deg, #ff5858 0%, #f09819 100%)',
-                  borderRadius: 18,
-                  boxShadow: '0 4px 24px rgba(255,88,88,0.10)',
-                  padding: 32,
-                  color: 'white',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 200
-                }}>
-                  <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 12 }}>
-                    Soil Moisture 🌱
-                  </h2>
-                  <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 8 }}>
-                    18%
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
-                    LOW
-                  </div>
-                  <div style={{ width: '100%', height: 12, background: 'rgba(255,255,255,0.2)', borderRadius: 6, marginTop: 8 }}>
-                    <div style={{ width: '18%', height: '100%', background: '#fff', borderRadius: 6 }}></div>
-                  </div>
-                  <div style={{ fontSize: 14, marginTop: 8 }}>
-                    Soil moisture is low. Consider watering soon.
-                  </div>
-                </div>
+                <LeafHealthWidget 
+                  health={leafStatus.health}
+                  color={leafStatus.color}
+                  status={leafStatus.status}
+                />
               </div>
             </div>
           </div>

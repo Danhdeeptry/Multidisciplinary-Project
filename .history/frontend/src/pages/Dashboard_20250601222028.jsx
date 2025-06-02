@@ -251,32 +251,105 @@ const Dashboard = () => {
     }}>
       {/* Sidebar */}
       <aside style={{
-        width: "200px",
+        width: "250px",
         backgroundColor: "#2e7d32",
         color: "white",
         padding: "20px 0",
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center"
+        flexDirection: "column"
       }}>
         <h2 style={{ 
-          fontSize: "24px",
-          fontWeight: "bold",
-          marginBottom: "30px"
+          padding: "0 20px", 
+          marginBottom: "30px", 
+          fontSize: "24px", 
+          fontWeight: "bold", 
+          textAlign: "center" 
         }}>
           Smart Farm
         </h2>
-        <a href="#" style={{
-          display: "block",
-          padding: "12px 20px",
-          color: "white",
-          textDecoration: "none",
-          backgroundColor: "rgba(255, 255, 255, 0.1)",
-          fontWeight: "500",
-          borderRadius: "8px"
-        }}>
-          Dashboard
-        </a>
+        
+        <nav>
+          <a href="#" style={{ 
+            display: "block",
+            padding: "12px 20px",
+            color: "white", 
+            textDecoration: "none",
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            marginBottom: "5px",
+            fontWeight: "500"
+          }}>
+            Dashboard
+          </a>
+          <a href="#" style={{ 
+            display: "block",
+            padding: "12px 20px",
+            color: "white", 
+            textDecoration: "none",
+            transition: "background-color 0.2s",
+            marginBottom: "5px"
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+          >
+            Sensors
+          </a>
+          <a href="#" style={{ 
+            display: "block",
+            padding: "12px 20px",
+            color: "white", 
+            textDecoration: "none",
+            transition: "background-color 0.2s",
+            marginBottom: "5px"
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+          >
+            Statistics
+          </a>
+          <a href="#" style={{ 
+            display: "block",
+            padding: "12px 20px",
+            color: "white", 
+            textDecoration: "none",
+            transition: "background-color 0.2s",
+            marginBottom: "5px"
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+          >
+            Settings
+          </a>
+          <a href="#" style={{ 
+            display: "block",
+            padding: "12px 20px",
+            color: "white", 
+            textDecoration: "none",
+            transition: "background-color 0.2s",
+            marginTop: "auto"
+          }}
+          onClick={goToLogin}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+          >
+            Logout
+          </a>
+        </nav>
       </aside>
 
       {/* Main Content */}
@@ -292,28 +365,18 @@ const Dashboard = () => {
           alignItems: "center", 
           marginBottom: "30px" 
         }}>
-          <div>
-            <h1 style={{ 
-              fontSize: "28px", 
-              color: "#2e7d32",
-              fontWeight: "bold",
-              marginBottom: 0
-            }}>
-              Welcome, Farmer!
-            </h1>
-            <div style={{ color: "#666", fontSize: "16px", marginTop: 4 }}>
-              Have a productive day on your smart farm 🌱
-            </div>
-          </div>
+          <h1 style={{ 
+            fontSize: "28px", 
+            color: "#2e7d32",
+            fontWeight: "bold" 
+          }}>
+            Welcome Farmer
+          </h1>
           <div style={{
             backgroundColor: "white",
-            padding: "18px 32px",
-            borderRadius: "12px",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
-            fontWeight: "bold",
-            fontSize: "28px",
-            display: "flex",
-            alignItems: "center"
+            padding: "10px 16px",
+            borderRadius: "8px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
           }}>
             <Clock />
           </div>
