@@ -17,9 +17,9 @@ namespace {
 
 // Temperature and humidity thresholds
 volatile float tempThresholdMin = 25.0f;     // Default minimum temperature (°C)
-volatile float tempThresholdMax = 34.0f;     // Default maximum temperature (°C)
+volatile float tempThresholdMax = 37.0f;     // Default maximum temperature (°C)
 volatile float humidityThresholdMin = 50.0f; // Default minimum humidity (%)
-volatile float humidityThresholdMax = 70.0f; // Default maximum humidity (%)
+volatile float humidityThresholdMax = 90.0f; // Default maximum humidity (%)
 
 bool initDHT20() {
     Wire.begin(SDA_PIN, SCL_PIN);
