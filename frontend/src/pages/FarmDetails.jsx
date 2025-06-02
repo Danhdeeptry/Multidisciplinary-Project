@@ -20,6 +20,7 @@ import LeafHealthWidget from '../components/widgets/LeafHealthWidget';
 import TemperatureWidget from '../components/widgets/TemperatureWidget';
 import HumidityWidget from '../components/widgets/HumidityWidget';
 import LightWidget from '../components/widgets/LightWidget';
+import AIAnalysis from '../components/AIAnalysis';
 
 // Register ChartJS components
 ChartJS.register(
@@ -506,7 +507,7 @@ const FarmDetails = () => {
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 0 48px 0' }}>
-        <Tabs tabs={['Graph', 'Monitoring']}>
+        <Tabs tabs={['Graph', 'Monitoring', 'AI']}>
           {/* Tab 1: Graph */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 32 }}>
             {/* Temperature Chart */}
@@ -592,6 +593,9 @@ const FarmDetails = () => {
               </div>
             </div>
           </div>
+
+          {/* Tab 3: AI */}
+          <AIAnalysis />
         </Tabs>
       </div>
     </div>
