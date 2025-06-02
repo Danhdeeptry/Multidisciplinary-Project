@@ -46,17 +46,18 @@ void setup() {
 }
 
 void onButtonOnPressed() {
-    growLightState = true;
-    digitalWrite(GROW_LIGHT_PIN, HIGH);
+    // Toggle grow light
+    growLightState = !growLightState;
+    digitalWrite(GROW_LIGHT_PIN, growLightState ? HIGH : LOW);
     attributesChanged = true;
-    Serial.println("[Button] Grow light turned ON by button");
+    Serial.printf("[Button] Grow light toggled: %s\n", growLightState ? "ON" : "OFF");
 }
 
 void onButtonOffPressed() {
-    growLightState = false;
-    digitalWrite(GROW_LIGHT_PIN, LOW);
+    // Toggle auto/manual mode
+    autoLightMode = !autoLightMode;
     attributesChanged = true;
-    Serial.println("[Button] Grow light turned OFF by button");
+    Serial.printf("[Button] Light mode toggled: %s\n", autoLightMode ? "AUTO" : "MANUAL");
 }
 
 void loop() {
