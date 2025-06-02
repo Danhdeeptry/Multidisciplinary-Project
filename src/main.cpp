@@ -26,7 +26,9 @@ void setup() {
         Serial.println("Failed to initialize DHT20 sensor");
     }
     pinMode(LIGHT_SENSOR_PIN, INPUT);
+    pinMode(SOIL_MOISTURE_PIN, INPUT);
     Serial.println("Light sensor initialized");    // 2) Khởi tạo LightControl
+    Serial.println("Soil moisture sensor initialized");
     initLightControl();
 
     // 3) Khởi tạo ButtonControl

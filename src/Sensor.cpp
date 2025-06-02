@@ -61,6 +61,11 @@ float readLightSensor() {
     return lux;
 }
 
+int readSoilMoisture() {
+    pinMode(SOIL_MOISTURE_PIN, INPUT);
+    return analogRead(SOIL_MOISTURE_PIN);
+}
+
 void checkTempHumidityAlerts(float temperature, float humidity) {
     extern ThingsBoard tb;
     extern volatile bool alertEnabled;

@@ -8,6 +8,7 @@
 #define SCL_PIN GPIO_NUM_12
 #define LIGHT_SENSOR_PIN 1
 #define GROW_LIGHT_PIN GPIO_NUM_6
+#define SOIL_MOISTURE_PIN 7  // D7
 
 constexpr uint16_t BLINKING_INTERVAL_MS_MIN = 10;
 constexpr uint16_t BLINKING_INTERVAL_MS_MAX = 60000;

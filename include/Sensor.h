@@ -27,3 +27,6 @@ extern volatile float humidityThresholdMax;
 
 // Check and send temperature/humidity alerts
 void checkTempHumidityAlerts(float temperature, float humidity);
+
+// Đọc cảm biến độ ẩm đất (soil moisture)
+int readSoilMoisture();

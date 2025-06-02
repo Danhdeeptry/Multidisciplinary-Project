@@ -18,12 +18,14 @@ RPC_Response readSensorData(const RPC_Data &data) {
     float temperature = readTemperature();
     float humidity = readHumidity();
     float lightIntensity = readLightSensor();
+    int soilMoisture = readSoilMoisture();
     float dli = getTotalDLI();
 
     StaticJsonDocument<300> doc;
     doc["temperature"] = serialized(String(temperature, 2));
     doc["humidity"] = serialized(String(humidity, 2));
     doc["light_intensity"] = serialized(String(lightIntensity, 1));
+    doc["soil_moisture"] = soilMoisture;
     doc["grow_light_state"] = growLightState;
     doc["auto_light_mode"] = autoLightMode;
     doc["daily_light_integral"] = serialized(String(dli, 3));
@@ -284,6 +286,7 @@ void sendTelemetryTask(void *pvParameters) {
                 float temperature = readTemperature();
                 float humidity = readHumidity();
                 float lightIntensity = readLightSensor();
+                float soilMoisture = readSoilMoisture();
 
                 controlGrowLight(lightIntensity);
                 updateDLI(lightIntensity);
@@ -294,6 +297,7 @@ void sendTelemetryTask(void *pvParameters) {
                 telemetryDoc["temperature"] = temperature;
                 telemetryDoc["humidity"] = humidity;
                 telemetryDoc["light_intensity"] = lightIntensity;
+                telemetryDoc["soil_moisture"] = soilMoisture;
                 telemetryDoc["grow_light_active"] = growLightState;
                 telemetryDoc["auto_mode_active"] = autoLightMode;
                 telemetryDoc["daily_light_integral"] = getTotalDLI();
